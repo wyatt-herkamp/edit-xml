@@ -1,21 +1,41 @@
 [package]
-name = "xml-doc"
+name = "edit-xml"
 version = "0.2.0"
-authors = ["Yoonchae Lee <bluegreenmagick@gmail.com>"]
+authors = [
+    "Yoonchae Lee <bluegreenmagick@gmail.com>",
+    "Wyatt Herkamp <wherkamp@gmail.com",
+]
 description = "Read, modify and write xml in tree-like structure. Supports UTF-16."
-edition = "2018"
-repository = "https://github.com/bluegreenmagick/xml-doc"
+edition = "2021"
+repository = "https://github.com/wyatt-herkamp/edit-xml"
 license = "MIT OR Apache-2.0"
 keywords = ["xml", "parser", "reader", "writer"]
 categories = ["parser-implementations", "data-structures", "encoding"]
 autobenches = false
 
 [dependencies]
-quick-xml = "0.22"
+quick-xml = "0.36"
 encoding_rs = "0.8"
-
-[workspace]
-exclude = ["benches"]
+thiserror = "1"
+tracing = "0.1"
 
 [dev-dependencies]
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tracing-appender = "0.2"
 itertools = "0.10"
+minidom = "0.16"
+roxmltree = "0.20"
+xmltree = "0.11"
+xml_dom = ">=0.2.5"         # avoid quick-xml version conflict
+criterion = "0.5"
+# parsers
+xml5ever = "0.20"
+markup5ever = "0.14"
+quick-xml = "0.36"
+RustyXML = { version = "0.3", package = "RustyXML" }
+xml_rs = { version = "0.8", package = "xml-rs" }
+
+[[bench]]
+name = "bench"
+path = "benches/bench.rs"
+harness = false

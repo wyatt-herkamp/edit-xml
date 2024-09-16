@@ -1,5 +1,5 @@
 use crate::document::{Document, Node};
-use crate::error::{Error, Result};
+use crate::error::{EditXMLError, Result};
 use std::collections::HashMap;
 
 #[derive(Debug)]
@@ -21,7 +21,7 @@ pub(crate) struct ElementData {
 /// # Examples
 ///
 /// ```
-/// use xml_doc::{Document, Element, Node};
+/// use edit_xml::{Document, Element, Node};
 ///
 /// let mut doc = Document::new();
 ///
@@ -126,7 +126,7 @@ impl ElementBuilder {
 ///
 /// Find children nodes with attribute
 /// ```
-/// use xml_doc::{Document, Element};
+/// use edit_xml::{Document, Element};
 ///
 /// let doc = Document::parse_str(r#"<?xml version="1.0"?>
 /// <data>
@@ -163,7 +163,7 @@ impl Element {
     ///
     /// # Example
     /// ```
-    /// use xml_doc::{Document, Element, Node};
+    /// use edit_xml::{Document, Element, Node};
     ///
     /// let mut doc = Document::new();
     ///
@@ -317,7 +317,7 @@ impl Element {
     ///
     /// The attribute names may have namespace prefix. To strip the prefix and only its name, call [`Element::separate_prefix_name`].
     /// ```
-    /// use xml_doc::{Document, Element};
+    /// use edit_xml::{Document, Element};
     ///
     /// let mut doc = Document::new();
     /// let element = Element::build("name")
@@ -529,11 +529,11 @@ impl Element {
     pub fn push_child(&self, doc: &mut Document, node: Node) -> Result<()> {
         if let Node::Element(elem) = node {
             if elem.is_container() {
-                return Err(Error::ContainerCannotMove);
+                return Err(EditXMLError::ContainerCannotMove);
             }
             let data = elem.mut_data(doc);
             if data.parent.is_some() {
-                return Err(Error::HasAParent);
+                return Err(EditXMLError::HasAParent);
             }
             data.parent = Some(*self);
         }
@@ -566,11 +566,11 @@ impl Element {
     pub fn insert_child(&self, doc: &mut Document, index: usize, node: Node) -> Result<()> {
         if let Node::Element(elem) = node {
             if elem.is_container() {
-                return Err(Error::ContainerCannotMove);
+                return Err(EditXMLError::ContainerCannotMove);
             }
             let data = elem.mut_data(doc);
             if data.parent.is_some() {
-                return Err(Error::HasAParent);
+                return Err(EditXMLError::HasAParent);
             }
             data.parent = Some(*self);
         }
@@ -618,7 +618,7 @@ impl Element {
     /// - [`Error::ContainerCannotMove`]: You can't detatch container element
     pub fn detatch(&self, doc: &mut Document) -> Result<()> {
         if self.is_container() {
-            return Err(Error::ContainerCannotMove);
+            return Err(EditXMLError::ContainerCannotMove);
         }
         let data = self.mut_data(doc);
         if let Some(parent) = data.parent {
@@ -674,8 +674,10 @@ mod tests {
 
     #[test]
     fn test_namespace() {
+        // OG Test had         <root xmlns="ns", xmlns:p="pns">
+
         let xml = r#"<?xml version="1.0" encoding="UTF-8"?>
-        <root xmlns="ns", xmlns:p="pns">
+        <root xmlns="ns" xmlns:p="pns">
             <p:foo xmlns="inner">
                 Hello
             </p:foo>

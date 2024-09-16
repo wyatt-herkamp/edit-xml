@@ -1,13 +1,13 @@
-use xml_doc::{Document, Element, Node};
-
+use edit_xml::{Document, Element, Node};
 #[test]
 fn test_escape() {
     let expected = r#"<?xml version="1.0" encoding="UTF-8"?>
-<root attr="&gt;&lt;&amp;&quot;&apos;attrval">
-  <inner xmlns:ns="&gt;&lt;&amp;&quot;&apos;nsval">&gt;&lt;&amp;&quot;&apos;text</inner>
+<root attr="&amp;gt;&amp;lt;&amp;amp;&amp;quot;&amp;apos;attrval">
+  <inner xmlns:ns="&amp;gt;&amp;lt;&amp;amp;&amp;quot;&amp;apos;nsval">&gt;&lt;&amp;&quot;&apos;text</inner>
 </root>
-<!--<&amp;--><![CDATA[<&amp;]]><!DOCTYPE &lt;&amp;amp;>
+<!--&lt;&amp;amp;--><![CDATA[<&amp;]]><!DOCTYPE  &lt;&amp;amp;>
 <?<&amp;?>"#;
+
     let mut doc = Document::new();
     let container = doc.container();
     let root = Element::build("root")
@@ -25,6 +25,6 @@ fn test_escape() {
         .unwrap();
     doc.push_root_node(Node::PI("<&amp;".to_string())).unwrap();
     let xml = doc.write_str().unwrap();
-
+    println!("{}", xml);
     assert_eq!(xml, expected);
 }

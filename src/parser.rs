@@ -1,6 +1,7 @@
 use crate::document::{Document, Node};
 use crate::element::Element;
-use crate::error::{Error, Result};
+use crate::error::{DecodeError, EditXMLError, Result};
+use crate::utils::{from_cow_bytes_to_string, XMLStringUtils};
 use encoding_rs::Decoder;
 use encoding_rs::{Encoding, UTF_16BE, UTF_16LE, UTF_8};
 use quick_xml::events::{BytesDecl, BytesStart, Event};
@@ -8,6 +9,7 @@ use quick_xml::Reader;
 use std::borrow::Cow;
 use std::collections::HashMap;
 use std::io::{BufRead, Read};
+use tracing::{debug, trace};
 
 pub(crate) struct DecodeReader<R: Read> {
     decoder: Option<Decoder>,
@@ -176,7 +178,7 @@ impl DocumentParser {
         self.doc.version = String::from_utf8(ev.version()?.to_vec())?;
         self.encoding = match ev.encoding() {
             Some(res) => {
-                let encoding = Encoding::for_label(&res?).ok_or(Error::CannotDecode)?;
+                let encoding = Encoding::for_label(&res?).ok_or(DecodeError::MissingEncoding)?;
                 if encoding == UTF_8 {
                     None
                 } else {
@@ -192,7 +194,7 @@ impl DocumentParser {
                     "yes" => true,
                     "no" => false,
                     _ => {
-                        return Err(Error::MalformedXML(
+                        return Err(EditXMLError::MalformedXML(
                             "Standalone Document Declaration has non boolean value".to_string(),
                         ))
                     }
@@ -204,14 +206,14 @@ impl DocumentParser {
     }
 
     fn create_element(&mut self, parent: Element, ev: &BytesStart) -> Result<Element> {
-        let full_name = String::from_utf8(ev.name().to_vec())?;
+        let full_name = ev.name().into_string()?;
         let mut namespace_decls = HashMap::new();
         let mut attributes = HashMap::new();
         for attr in ev.attributes() {
             let mut attr = attr?;
             attr.value = Cow::Owned(normalize_space(&attr.value));
-            let key = String::from_utf8(attr.key.to_vec())?;
-            let value = String::from_utf8(attr.unescaped_value()?.to_vec())?;
+            let key = attr.key.into_string()?;
+            let value = from_cow_bytes_to_string(&attr.value)?;
             if key == "xmlns" {
                 namespace_decls.insert(String::new(), value);
                 continue;
@@ -232,19 +234,17 @@ impl DocumentParser {
     fn handle_event(&mut self, event: Event) -> Result<bool> {
         match event {
             Event::Start(ref ev) => {
-                let parent = *self
-                    .element_stack
-                    .last()
-                    .ok_or_else(|| Error::MalformedXML("Malformed Element Tree".to_string()))?;
+                let parent = *self.element_stack.last().ok_or_else(|| {
+                    EditXMLError::MalformedXML("Malformed Element Tree".to_string())
+                })?;
                 let element = self.create_element(parent, ev)?;
                 self.element_stack.push(element);
                 Ok(false)
             }
             Event::End(_) => {
-                let elem = self
-                    .element_stack
-                    .pop()
-                    .ok_or_else(|| Error::MalformedXML("Malformed Element Tree".to_string()))?; // quick-xml checks if tag names match for us
+                let elem = self.element_stack.pop().ok_or_else(|| {
+                    EditXMLError::MalformedXML("Malformed Element Tree".to_string())
+                })?; // quick-xml checks if tag names match for us
                 if self.read_opts.empty_text_node {
                     // distinguish <tag></tag> and <tag />
                     if !elem.has_children(&self.doc) {
@@ -255,10 +255,9 @@ impl DocumentParser {
                 Ok(false)
             }
             Event::Empty(ref ev) => {
-                let parent = *self
-                    .element_stack
-                    .last()
-                    .ok_or_else(|| Error::MalformedXML("Malformed Element Tree".to_string()))?;
+                let parent = *self.element_stack.last().ok_or_else(|| {
+                    EditXMLError::MalformedXML("Malformed Element Tree".to_string())
+                })?;
                 self.create_element(parent, ev)?;
                 Ok(false)
             }
@@ -272,62 +271,58 @@ impl DocumentParser {
                 if ev.is_empty() {
                     return Ok(false);
                 }
-                let content = String::from_utf8(ev.unescaped()?.to_vec())?;
+                // NOTE: Was Unescaped
+                let content = ev.unescape_to_string()?;
                 let node = Node::Text(content);
-                let parent = *self
-                    .element_stack
-                    .last()
-                    .ok_or_else(|| Error::MalformedXML("Malformed Element Tree".to_string()))?;
+                let parent = *self.element_stack.last().ok_or_else(|| {
+                    EditXMLError::MalformedXML("Malformed Element Tree".to_string())
+                })?;
                 parent.push_child(&mut self.doc, node).unwrap();
                 Ok(false)
             }
             Event::DocType(ev) => {
                 // Event::DocType comes with one leading whitespace. Strip the whitespace.
-                let raw = ev.unescaped()?;
+                let raw = ev.unescape_to_string()?.into_bytes();
                 let content = if !raw.is_empty() && raw[0] == b' ' {
                     String::from_utf8(raw[1..].to_vec())?
                 } else {
                     String::from_utf8(raw.to_vec())?
                 };
                 let node = Node::DocType(content);
-                let parent = *self
-                    .element_stack
-                    .last()
-                    .ok_or_else(|| Error::MalformedXML("Malformed Element Tree".to_string()))?;
+                let parent = *self.element_stack.last().ok_or_else(|| {
+                    EditXMLError::MalformedXML("Malformed Element Tree".to_string())
+                })?;
                 parent.push_child(&mut self.doc, node).unwrap();
                 Ok(false)
             }
             Event::Comment(ev) => {
-                let content = String::from_utf8(ev.escaped().to_vec())?;
+                let content = String::from_utf8(ev.escape_ascii().collect())?;
                 let node = Node::Comment(content);
-                let parent = *self
-                    .element_stack
-                    .last()
-                    .ok_or_else(|| Error::MalformedXML("Malformed Element Tree".to_string()))?;
+                let parent = *self.element_stack.last().ok_or_else(|| {
+                    EditXMLError::MalformedXML("Malformed Element Tree".to_string())
+                })?;
                 parent.push_child(&mut self.doc, node).unwrap();
                 Ok(false)
             }
             Event::CData(ev) => {
-                let content = String::from_utf8(ev.unescaped()?.to_vec())?;
+                let content = String::from_utf8(ev.to_vec())?;
                 let node = Node::CData(content);
-                let parent = *self
-                    .element_stack
-                    .last()
-                    .ok_or_else(|| Error::MalformedXML("Malformed Element Tree".to_string()))?;
+                let parent = *self.element_stack.last().ok_or_else(|| {
+                    EditXMLError::MalformedXML("Malformed Element Tree".to_string())
+                })?;
                 parent.push_child(&mut self.doc, node).unwrap();
                 Ok(false)
             }
             Event::PI(ev) => {
-                let content = String::from_utf8(ev.escaped().to_vec())?;
+                let content = String::from_utf8(ev.to_vec())?;
                 let node = Node::PI(content);
-                let parent = *self
-                    .element_stack
-                    .last()
-                    .ok_or_else(|| Error::MalformedXML("Malformed Element Tree".to_string()))?;
+                let parent = *self.element_stack.last().ok_or_else(|| {
+                    EditXMLError::MalformedXML("Malformed Element Tree".to_string())
+                })?;
                 parent.push_child(&mut self.doc, node).unwrap();
                 Ok(false)
             }
-            Event::Decl(_) => Err(Error::MalformedXML(
+            Event::Decl(_) => Err(EditXMLError::MalformedXML(
                 "XML declaration found in the middle of the document".to_string(),
             )),
             Event::Eof => Ok(true),
@@ -366,44 +361,52 @@ impl DocumentParser {
 
     // Look at the document decl and figure out the document encoding
     fn parse_start<R: Read>(&mut self, reader: R) -> Result<()> {
+        debug!(?self.read_opts, "Parsing Start");
         let mut decodereader = DecodeReader::new(reader, None);
         let mut init_encoding = self.sniff_encoding(&mut decodereader)?;
         if let Some(enc) = &self.read_opts.encoding {
-            init_encoding = Some(Encoding::for_label(enc.as_bytes()).ok_or(Error::CannotDecode)?)
+            init_encoding =
+                Some(Encoding::for_label(enc.as_bytes()).ok_or(DecodeError::MissingEncoding)?)
         }
+        debug!(?init_encoding, "Initial Encoding");
         decodereader.set_encoding(init_encoding);
         let mut xmlreader = Reader::from_reader(decodereader);
-        xmlreader.trim_text(self.read_opts.trim_text);
+        xmlreader.config_mut().trim_text(self.read_opts.trim_text);
 
         let mut buf = Vec::with_capacity(200);
 
         // Skip first event if it only has whitespace
-        let event = match xmlreader.read_event(&mut buf)? {
+        let event = match xmlreader.read_event_into(&mut buf)? {
             Event::Text(ev) => {
                 if ev.len() == 0 {
-                    xmlreader.read_event(&mut buf)?
+                    trace!("Skipping empty text event");
+                    xmlreader.read_event_into(&mut buf)?
                 } else if self.read_opts.ignore_whitespace_only && only_has_whitespace(&ev) {
-                    xmlreader.read_event(&mut buf)?
+                    trace!("Skipping whitespace only text event");
+                    xmlreader.read_event_into(&mut buf)?
                 } else {
+                    trace!("First Event is Text");
                     Event::Text(ev)
                 }
             }
             ev => ev,
         };
-
+        debug!(?event, "First Event");
         if let Event::Decl(ev) = event {
             self.handle_decl(&ev)?;
             // Encoding::for_label("UTF-16") defaults to UTF-16 LE, even though it could be UTF-16 BE
             if self.encoding != init_encoding
                 && !(self.encoding == Some(UTF_16LE) && init_encoding == Some(UTF_16BE))
             {
-                let mut decode_reader = xmlreader.into_underlying_reader();
+                let mut decode_reader = xmlreader.into_inner();
                 decode_reader.set_encoding(self.encoding);
                 xmlreader = Reader::from_reader(decode_reader);
-                xmlreader.trim_text(self.read_opts.trim_text);
+                xmlreader.config_mut().trim_text(self.read_opts.trim_text);
             }
         } else if self.read_opts.require_decl {
-            return Err(Error::MalformedXML(
+            debug!(?self.read_opts, ?event, "XML Declaration is required");
+            panic!("XML Declaration is required");
+            return Err(EditXMLError::MalformedXML(
                 "Didn't find XML Declaration at the start of file".to_string(),
             ));
         } else if self.handle_event(event)? {
@@ -417,14 +420,16 @@ impl DocumentParser {
         let mut buf = Vec::with_capacity(200); // reduce time increasing capacity at start.
 
         loop {
-            let ev = reader.read_event(&mut buf)?;
+            let ev = reader.read_event_into(&mut buf)?;
 
             if self.handle_event(ev)? {
                 if self.element_stack.len() == 1 {
                     // Should only have container remaining in element_stack
                     return Ok(());
                 } else {
-                    return Err(Error::MalformedXML("Closing tag not found.".to_string()));
+                    return Err(EditXMLError::MalformedXML(
+                        "Closing tag not found.".to_string(),
+                    ));
                 }
             }
         }
