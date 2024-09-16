@@ -1,5 +1,4 @@
-use edit_xml::{Document, EditXMLError, Node, ReadOptions};
-use quick_xml::errors::IllFormedError;
+use edit_xml::{Document, Node, ReadOptions};
 use tracing::{debug, info};
 fn setup_logger() {
     use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};

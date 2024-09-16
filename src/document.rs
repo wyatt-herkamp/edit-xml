@@ -1,6 +1,7 @@
 use crate::element::{Element, ElementData};
 use crate::error::{EditXMLError, Result};
 use crate::parser::{DocumentParser, ReadOptions};
+use crate::types::StandaloneValue;
 use quick_xml::events::{BytesCData, BytesDecl, BytesEnd, BytesPI, BytesStart, BytesText, Event};
 use quick_xml::Writer;
 use std::fs::File;
@@ -114,20 +115,24 @@ pub struct Document {
     container: Element,
 
     pub(crate) version: String,
-    pub(crate) standalone: bool,
+    pub(crate) standalone: Option<StandaloneValue>,
 }
-
-impl Document {
-    /// Create a blank new xml document.
-    pub fn new() -> Document {
+impl Default for Document {
+    fn default() -> Self {
         let (container, container_data) = Element::container();
         Document {
             counter: 1, // because container is id 0
             store: vec![container_data],
             container,
             version: String::from("1.0"),
-            standalone: false,
+            standalone: None,
         }
+    }
+}
+impl Document {
+    /// Create a blank new xml document.
+    pub fn new() -> Document {
+        Document::default()
     }
 
     /// Get 'container' element of Document.
@@ -267,10 +272,7 @@ impl Document {
     }
 
     fn write_decl(&self, writer: &mut Writer<impl Write>) -> Result<()> {
-        let standalone = match self.standalone {
-            true => Some("yes"),
-            false => None,
-        };
+        let standalone =self.standalone.map(|v| v.as_str());
         writer.write_event(Event::Decl(BytesDecl::new(
             &self.version,
             Some("UTF-8"),

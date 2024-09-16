@@ -18,24 +18,36 @@ quick-xml = "0.36"
 encoding_rs = "0.8"
 thiserror = "1"
 tracing = "0.1"
-
+ahash = {version = "0.8", optional = true}
+[features]
+default = ["ahash"]
 [dev-dependencies]
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 tracing-appender = "0.2"
-itertools = "0.10"
+itertools = "0.13"
+
 minidom = "0.16"
 roxmltree = "0.20"
 xmltree = "0.11"
-xml_dom = ">=0.2.5"         # avoid quick-xml version conflict
-criterion = "0.5"
+xml_dom = "0.2"         # avoid quick-xml version conflict
 # parsers
 xml5ever = "0.20"
 markup5ever = "0.14"
 quick-xml = "0.36"
-RustyXML = { version = "0.3", package = "RustyXML" }
 xml_rs = { version = "0.8", package = "xml-rs" }
 
+criterion = "0.5"
+
 [[bench]]
-name = "bench"
-path = "benches/bench.rs"
+name = "dom_based"
+path = "benches/dom_based.rs"
+harness = false
+[[bench]]
+name = "event_based"
+path = "benches/event_based.rs"
+harness = false
+
+[[bench]]
+name = "library_benches"
+path = "benches/library_benches.rs"
 harness = false

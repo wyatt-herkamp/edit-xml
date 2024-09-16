@@ -1,11 +1,22 @@
-use core::error;
 use quick_xml::{escape::EscapeError, events::attributes::AttrError, Error as XMLError};
 use std::{str::Utf8Error, string::FromUtf8Error, sync::Arc};
 use thiserror::Error;
 
 /// Wrapper around `std::Result`
 pub type Result<T> = std::result::Result<T, EditXMLError>;
-
+#[derive(Debug, Error)]
+pub enum MalformedReason {
+    #[error("Missing XML Declaration. Expected `<?xml version=\"1.0\" encoding=\"UTF-8\"?>`")]
+    MissingDeclaration,
+    #[error("Unexpected Item {0}")]
+    UnexpectedItem(&'static str),
+    #[error("Malformed Element Tree")]
+    GenericMalformedTree,
+    #[error("Standalone Document should be yes or no")]
+    InvalidStandAloneValue,
+    #[error("Missing closing tag")]
+    MissingClosingTag,
+}
 /// Error types
 #[derive(Debug, Error)]
 pub enum EditXMLError {
@@ -19,7 +30,7 @@ pub enum EditXMLError {
     CannotDecode(#[from] DecodeError),
     /// Assorted errors while parsing XML.
     #[error("Malformed XML: {0}")]
-    MalformedXML(String),
+    MalformedXML(#[from] MalformedReason),
     /// The container element cannot have a parent.
     /// Use `element.is_container()` to check if it is a container before
     /// assigning it to another parent.

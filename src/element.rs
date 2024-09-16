@@ -1,6 +1,6 @@
 use crate::document::{Document, Node};
 use crate::error::{EditXMLError, Result};
-use std::collections::HashMap;
+use crate::utils::HashMap;
 
 #[derive(Debug)]
 pub(crate) struct ElementData {
@@ -54,8 +54,8 @@ impl ElementBuilder {
     fn new(full_name: String) -> ElementBuilder {
         ElementBuilder {
             full_name: full_name,
-            attributes: HashMap::new(),
-            namespace_decls: HashMap::new(),
+            attributes: HashMap::default(),
+            namespace_decls: HashMap::default(),
             text_content: None,
         }
     }
@@ -201,8 +201,8 @@ impl Element {
     pub(crate) fn container() -> (Element, ElementData) {
         let elem_data = ElementData {
             full_name: String::new(),
-            attributes: HashMap::new(),
-            namespace_decls: HashMap::new(),
+            attributes: HashMap::default(),
+            namespace_decls: HashMap::default(),
             parent: None,
             children: Vec::new(),
         };
@@ -222,7 +222,7 @@ impl Element {
         Node::Element(*self)
     }
 
-    /// Seperate full_name by `:`, returning (prefix, name).
+    /// Separate full_name by `:`, returning (prefix, name).
     ///
     /// The first str is `""` if `full_name` has no prefix.
     pub fn separate_prefix_name(full_name: &str) -> (&str, &str) {
@@ -523,7 +523,7 @@ impl Element {
     /// Equivalent to `vec.push()`.
     /// # Errors
     /// - [`Error::HasAParent`]: When you want to replace an element's parent with another,
-    /// call `element.detatch()` to make it parentless first.
+    /// call `element.detach()` to make it parentless first.
     /// This is to make it explicit that you are changing an element's parent, not adding another.
     /// - [`Error::ContainerCannotMove`]: The container element's parent must always be None.
     pub fn push_child(&self, doc: &mut Document, node: Node) -> Result<()> {
@@ -615,8 +615,8 @@ impl Element {
     ///
     /// # Errors
     ///
-    /// - [`Error::ContainerCannotMove`]: You can't detatch container element
-    pub fn detatch(&self, doc: &mut Document) -> Result<()> {
+    /// - [`Error::ContainerCannotMove`]: You can't detach container element
+    pub fn detach(&self, doc: &mut Document) -> Result<()> {
         if self.is_container() {
             return Err(EditXMLError::ContainerCannotMove);
         }
@@ -781,7 +781,7 @@ mod tests {
         assert_eq!(a.parent(&doc).unwrap(), root);
 
         // Element.detatch
-        a.detatch(&mut doc).unwrap();
+        a.detach(&mut doc).unwrap();
         assert_eq!(root.children(&doc).len(), 0);
         assert_eq!(a.parent(&doc), None);
     }

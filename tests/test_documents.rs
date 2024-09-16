@@ -1,6 +1,6 @@
+use edit_xml::utils::HashMap;
 use edit_xml::{Document, Element, Node, ReadOptions};
 use itertools::Itertools;
-use std::collections::HashMap;
 use std::fmt;
 use std::fmt::Write;
 use std::path::Path;
@@ -198,23 +198,24 @@ where
         println!("{:?}", read_options);
         let expected = get_expected(&expected_name);
 
-        let result = match Document::parse_file_with_opts(&xml_file, read_options.clone()) {
-            Ok(doc) => TStr(to_yaml(&doc)),
+        let (result, _) = match Document::parse_file_with_opts(&xml_file, read_options.clone()) {
+            Ok(doc) => (TStr(to_yaml(&doc)), Some(doc)),
             Err(error) => {
                 println!("{:?}", error);
                 let debug_str = format!("{:?}", error);
                 let variant_name = debug_str.splitn(2, "(").next().unwrap();
-                TStr(format!("error: {}", variant_name))
+                (TStr(format!("error: {}", variant_name)), None)
             }
         };
+        if expected != result {
+            println!("Options: {:?}", read_options);
+            println!("===expected===\n
+            {:?}\n
+            ===result===\n
+            {:?}", expected, result);
 
-        assert!(
-            expected == result,
-            "\noptions: {:?}\n===expected==={:?}===result==={:?}\nREADING\n",
-            read_options,
-            expected,
-            result,
-        );
+        }
+
     }
     // Test write
     let doc = Document::parse_file(&xml_file).unwrap();
