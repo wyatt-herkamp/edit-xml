@@ -2,7 +2,6 @@ use crate::element::{Element, ElementData};
 use crate::error::{EditXMLError, Result};
 use crate::parser::{DocumentParser, ReadOptions};
 use crate::types::StandaloneValue;
-use derive_more::derive::From;
 use quick_xml::events::{BytesCData, BytesDecl, BytesEnd, BytesPI, BytesStart, BytesText, Event};
 use quick_xml::Writer;
 use std::fs::File;
