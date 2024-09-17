@@ -1,4 +1,4 @@
-use edit_xml::{Document, Element, Node, ReadOptions};
+use edit_xml::{Document, Element, Node};
 mod test_utils;
 
 #[test]
