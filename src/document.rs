@@ -2,6 +2,7 @@ use crate::element::{Element, ElementData};
 use crate::error::{EditXMLError, Result};
 use crate::parser::{DocumentParser, ReadOptions};
 use crate::types::StandaloneValue;
+use derive_more::derive::From;
 use quick_xml::events::{BytesCData, BytesDecl, BytesEnd, BytesPI, BytesStart, BytesText, Event};
 use quick_xml::Writer;
 use std::fs::File;
@@ -25,6 +26,11 @@ pub enum Node {
     PI(String),
     /// Document Type Declaration ([specification](https://www.w3.org/TR/xml/#sec-prolog-dtd))
     DocType(String),
+}
+impl From<Element> for Node {
+    fn from(elem: Element) -> Self {
+        Node::Element(elem)
+    }
 }
 
 impl Node {
