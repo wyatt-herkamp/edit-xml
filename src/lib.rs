@@ -66,7 +66,11 @@ mod error;
 mod parser;
 pub mod utils;
 pub mod types;
+
 pub use crate::document::{Document, Node, WriteOptions};
 pub use crate::element::{Element, ElementBuilder};
 pub use crate::error::{EditXMLError, Result};
 pub use crate::parser::{normalize_space, ReadOptions};
+
+// Re-export quick-xml for convenience
+pub use quick_xml;

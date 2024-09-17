@@ -53,7 +53,7 @@ pub struct ElementBuilder {
 impl ElementBuilder {
     fn new(full_name: String) -> ElementBuilder {
         ElementBuilder {
-            full_name: full_name,
+             full_name,
             attributes: HashMap::default(),
             namespace_decls: HashMap::default(),
             text_content: None,
@@ -517,15 +517,15 @@ impl Element {
 ///
 /// Because an element has reference to both its parent and its children,
 /// an element's parent and children is not directly exposed for modification.
-/// But in return, it is not possible for a document to be in an inconsistant state,
+/// But in return, it is not possible for a document to be in an inconsistent state,
 /// where an element's parent doesn't have the element as its children.
 impl Element {
     /// Equivalent to `vec.push()`.
     /// # Errors
-    /// - [`Error::HasAParent`]: When you want to replace an element's parent with another,
-    /// call `element.detach()` to make it parentless first.
-    /// This is to make it explicit that you are changing an element's parent, not adding another.
-    /// - [`Error::ContainerCannotMove`]: The container element's parent must always be None.
+    ///    - [EditXMLError::HasAParent]: When you want to replace an element's parent with another,
+    ///         call `element.detach()` to make it parentless first.
+    ///         This is to make it explicit that you are changing an element's parent, not adding another.
+    ///    - [EditXMLError::ContainerCannotMove]: The container element's parent must always be None.
     pub fn push_child(&self, doc: &mut Document, node: Node) -> Result<()> {
         if let Node::Element(elem) = node {
             if elem.is_container() {
@@ -544,10 +544,10 @@ impl Element {
     /// Equivalent to `parent.push_child()`.
     ///
     /// # Errors
-    /// - [`Error::HasAParent`]: When you want to replace an element's parent with another,
-    /// call `element.detatch()` to make it parentless first.
-    /// This is to make it explicit that you are changing an element's parent, not adding another.
-    /// - [`Error::ContainerCannotMove`]: The container element's parent must always be None.
+    ///    - [EditXMLError::HasAParent]: When you want to replace an element's parent with another,
+    ///        call `element.detach()` to make it parentless first.
+    ///        This is to make it explicit that you are changing an element's parent, not adding another.
+    ///    - [EditXMLError::ContainerCannotMove]: The container element's parent must always be None.
     pub fn push_to(&self, doc: &mut Document, parent: Element) -> Result<()> {
         parent.push_child(doc, self.as_node())
     }
@@ -560,8 +560,8 @@ impl Element {
     ///
     /// # Errors
     /// - [`Error::HasAParent`]: When you want to replace an element's parent with another,
-    /// call `element.detatch()` to make it parentless first.
-    /// This is to make it explicit that you are changing an element's parent, not adding another.
+    ///     call `element.detach()` to make it parentless first.
+    ///     This is to make it explicit that you are changing an element's parent, not adding another.
     /// - [`Error::ContainerCannotMove`]: The container element's parent must always be None.
     pub fn insert_child(&self, doc: &mut Document, index: usize, node: Node) -> Result<()> {
         if let Node::Element(elem) = node {
@@ -780,7 +780,7 @@ mod tests {
         assert_eq!(root.children(&doc)[0].as_element().unwrap(), a);
         assert_eq!(a.parent(&doc).unwrap(), root);
 
-        // Element.detatch
+        // Element.detach
         a.detach(&mut doc).unwrap();
         assert_eq!(root.children(&doc).len(), 0);
         assert_eq!(a.parent(&doc), None);

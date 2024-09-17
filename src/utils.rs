@@ -1,3 +1,4 @@
+#![allow(clippy::wrong_self_convention)]
 use quick_xml::{
     events::{BytesPI, BytesText},
     name::QName,
@@ -13,6 +14,7 @@ pub trait XMLStringUtils {
     /// Escapes non-ascii characters into their escape sequences
     fn escape_ascii_into_string(&self) -> Result<String, EditXMLError>;
     /// Converts the type into a string
+
     fn into_string(&self) -> Result<String, EditXMLError>;
     /// Unescapes the content of the type into a string
     fn unescape_to_string(&self) -> Result<String, EditXMLError> {
@@ -28,7 +30,7 @@ impl XMLStringUtils for BytesText<'_> {
     }
 
     fn into_string(&self) -> Result<String, EditXMLError> {
-        String::from_utf8(self.to_vec()).map_err(|err| EditXMLError::from(err))
+        String::from_utf8(self.to_vec()).map_err( EditXMLError::from)
     }
 }
 impl XMLStringUtils for QName<'_> {
@@ -37,20 +39,20 @@ impl XMLStringUtils for QName<'_> {
     }
 
     fn into_string(&self) -> Result<String, EditXMLError> {
-        String::from_utf8(self.0.to_vec()).map_err(|err| EditXMLError::from(err))
+        String::from_utf8(self.0.to_vec()).map_err( EditXMLError::from)
     }
 }
 impl XMLStringUtils for BytesPI<'_> {
     fn escape_ascii_into_string(&self) -> Result<String, EditXMLError> {
-        return self.into_string();
+         self.into_string()
     }
 
     fn into_string(&self) -> Result<String, EditXMLError> {
-        return Ok(String::from_utf8(self.to_vec())?);
+         Ok(String::from_utf8(self.to_vec())?)
     }
 }
-pub(crate) fn from_cow_bytes_to_string(
-    cow: &std::borrow::Cow<'_, [u8]>,
+pub(crate) fn bytes_to_unescaped_string(
+    cow: &[u8],
 ) -> Result<String, EditXMLError> {
     let value = String::from_utf8(cow.to_vec())?;
     let unescape = quick_xml::escape::unescape(&value)?;

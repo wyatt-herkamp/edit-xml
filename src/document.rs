@@ -164,7 +164,7 @@ impl Document {
 
     /// Get first root node that is an element.
     pub fn root_element(&self) -> Option<Element> {
-        self.container.child_elements(self).get(0).copied()
+        self.container.child_elements(self).first().copied()
     }
 
     /// Push a node to end of root nodes.
@@ -215,6 +215,7 @@ impl Document {
 }
 
 /// Options when writing XML.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct WriteOptions {
     /// Byte character to indent with. (default: `b' '`)
     pub indent_char: u8,
@@ -223,10 +224,9 @@ pub struct WriteOptions {
     /// XML declaration should be written at the top. (default: `true`)
     pub write_decl: bool,
 }
-
-impl WriteOptions {
-    pub fn default() -> WriteOptions {
-        WriteOptions {
+impl Default for WriteOptions{
+    fn default() -> Self {
+        Self {
             indent_char: b' ',
             indent_size: 2,
             write_decl: true,

@@ -1,6 +1,9 @@
-use edit_xml::{Document, Element, Node};
+use edit_xml::{Document, Element, Node, ReadOptions};
+mod test_utils;
+
 #[test]
 fn test_escape() {
+    test_utils::setup_logger();
     let expected = r#"<?xml version="1.0" encoding="UTF-8"?>
 <root attr="&amp;gt;&amp;lt;&amp;amp;&amp;quot;&amp;apos;attrval">
   <inner xmlns:ns="&amp;gt;&amp;lt;&amp;amp;&amp;quot;&amp;apos;nsval">&gt;&lt;&amp;&quot;&apos;text</inner>
@@ -28,3 +31,4 @@ fn test_escape() {
     println!("{}", xml);
     assert_eq!(xml, expected);
 }
+

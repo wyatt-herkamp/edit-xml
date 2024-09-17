@@ -36,8 +36,8 @@ pub enum EditXMLError {
     /// assigning it to another parent.
     #[error("Container element cannot move")]
     ContainerCannotMove,
-    /// You need to call `element.detatch()` before assigning another parent.
-    #[error("Element already has a parent. Call detatch() before changing parent.")]
+    /// You need to call `element.detach()` before assigning another parent.
+    #[error("Element already has a parent. Call detach() before changing parent.")]
     HasAParent,
     #[error("Attribute Error {0}")]
     AttrError(#[from] AttrError),

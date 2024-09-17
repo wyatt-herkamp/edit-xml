@@ -1,11 +1,11 @@
 [package]
 name = "edit-xml"
-version = "0.2.0"
+version = "0.1.0"
 authors = [
-    "Yoonchae Lee <bluegreenmagick@gmail.com>",
     "Wyatt Herkamp <wherkamp@gmail.com",
+    "Yoonchae Lee <bluegreenmagick@gmail.com>",
 ]
-description = "Read, modify and write xml in tree-like structure. Supports UTF-16."
+description = "Read, modify and write xml in tree-like structure."
 edition = "2021"
 repository = "https://github.com/wyatt-herkamp/edit-xml"
 license = "MIT OR Apache-2.0"

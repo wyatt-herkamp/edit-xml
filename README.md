@@ -1,6 +1,6 @@
-# xml-doc
+# edit-xml
 
-xml-doc is a rust library to read, modify, and write XML documents. [Documentation](https://docs.rs/xml-doc/0.1.1/xml_doc/)
+edit-xml is a rust library to read, modify, and write XML documents. [Documentation](https://docs.rs/edit-xml/latest/edit-xml/)
 
 It's aim is to be able to read **any** xml files, and modify only the parts you want to.
 
@@ -46,7 +46,7 @@ let new_xml = doc.write_str();
 
 ## Performance
 
-To run benchmark: `cd benches ; cargo bench`.
+To run benchmark: `cargo bench`.
 
 ### Tree-based Parser
 

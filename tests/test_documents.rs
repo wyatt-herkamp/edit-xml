@@ -1,22 +1,11 @@
 use edit_xml::utils::HashMap;
 use edit_xml::{Document, Element, Node, ReadOptions};
-use itertools::Itertools;
+use tracing::info;
 use std::fmt;
 use std::fmt::Write;
 use std::path::Path;
 use std::str::FromStr;
-use tracing::{debug, info};
-fn setup_logger() {
-    use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
-    static INIT: std::sync::Once = std::sync::Once::new();
-    INIT.call_once(|| {
-        let stdout_log = tracing_subscriber::fmt::layer().pretty();
-        tracing_subscriber::registry().with(stdout_log).init();
-    });
-    println!("Logger initialized");
-    info!("Logger initialized");
-    debug!("Logger initialized");
-}
+mod test_utils;
 
 #[derive(Clone)]
 struct TStr(pub String);
@@ -174,28 +163,9 @@ where
 {
     let xml_file = Path::new("tests/documents").join(xml_file);
 
-    // Options
-    let empty_text_node_opts = [true, false];
-    let trim_text = [true, false];
-    let ignore_whitespace_only = [true, false];
-    let require_decl = [true, false];
-    let opts = [
-        empty_text_node_opts,
-        trim_text,
-        ignore_whitespace_only,
-        require_decl,
-    ];
-
-    for k in opts.iter().multi_cartesian_product() {
-        println!("{:?}", k);
-        let mut read_options = ReadOptions::default();
-        read_options.empty_text_node = *k[0];
-        read_options.trim_text = *k[1];
-        read_options.ignore_whitespace_only = *k[2];
-        read_options.require_decl = *k[3];
+    for read_options in test_utils::iter_read_options() {
+        info!(?read_options, ?xml_file, "Testing with read options");
         let expected_name: String = expected(&read_options).into();
-        println!("{:?}", expected_name);
-        println!("{:?}", read_options);
         let expected = get_expected(&expected_name);
 
         let (result, _) = match Document::parse_file_with_opts(&xml_file, read_options.clone()) {
@@ -221,27 +191,10 @@ where
     let doc = Document::parse_file(&xml_file).unwrap();
     test_write(&doc);
 }
-#[test]
-fn nodes_special_test() {
-    setup_logger();
-
-    let xml = Document::parse_file_with_opts(
-        Path::new("tests/documents").join("nodes.xml"),
-        ReadOptions {
-            empty_text_node: true,
-            trim_text: true,
-            ignore_whitespace_only: false,
-            require_decl: true,
-            encoding: None,
-        },
-    );
-    let doc = xml.unwrap();
-    print!("{:?}", doc);
-}
 
 #[test]
 fn nodes() {
-    setup_logger();
+    test_utils::setup_logger();
     test("nodes.xml", |opts| {
         if !opts.ignore_whitespace_only && !opts.trim_text {
             "nodes_noignws.yaml"
@@ -272,15 +225,20 @@ fn expected_doc_yaml<'a>(opts: &ReadOptions) -> &'a str {
 }
 #[test]
 fn document() {
+    test_utils::setup_logger();
+
     test("doc.xml", expected_doc_yaml)
 }
 
 #[test]
 fn encoding1() {
+    test_utils::setup_logger();
+
     test("encoding1.xml", expected_doc_yaml)
 }
 
 #[test]
 fn encoding2() {
+    test_utils::setup_logger();
     test("encoding2.xml", expected_doc_yaml)
 }

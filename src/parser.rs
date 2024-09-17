@@ -3,7 +3,7 @@ use crate::element::Element;
 use crate::error::{DecodeError, EditXMLError, MalformedReason, Result};
 use crate::types::StandaloneValue;
 use crate::utils::HashMap;
-use crate::utils::{from_cow_bytes_to_string, XMLStringUtils};
+use crate::utils::{bytes_to_unescaped_string, XMLStringUtils};
 use encoding_rs::Decoder;
 use encoding_rs::{Encoding, UTF_16BE, UTF_16LE, UTF_8};
 use quick_xml::events::{BytesDecl, BytesStart, Event};
@@ -139,10 +139,8 @@ pub struct ReadOptions {
     /// Default: `None`
     pub encoding: Option<String>,
 }
-
-impl ReadOptions {
-    /// Create ReadOptions with default options.
-    pub fn default() -> ReadOptions {
+impl Default for ReadOptions{
+    fn default() -> Self {
         ReadOptions {
             empty_text_node: true,
             trim_text: true,
@@ -169,7 +167,7 @@ impl DocumentParser {
             doc,
             read_opts: opts,
             encoding: None,
-            element_stack: element_stack,
+            element_stack,
         };
         parser.parse_start(reader)?;
         Ok(parser.doc)
@@ -206,7 +204,7 @@ impl DocumentParser {
             let mut attr = attr?;
             attr.value = Cow::Owned(normalize_space(&attr.value));
             let key = attr.key.into_string()?;
-            let value = from_cow_bytes_to_string(&attr.value)?;
+            let value = bytes_to_unescaped_string(&attr.value)?;
             if key == "xmlns" {
                 namespace_decls.insert(String::new(), value);
                 continue;
@@ -425,6 +423,7 @@ impl DocumentParser {
 }
 
 /// Returns true if byte is an XML whitespace character
+#[allow(clippy::match_like_matches_macro)]
 fn is_whitespace(byte: u8) -> bool {
     match byte {
         b'\r' | b'\n' | b'\t' | b' ' => true,

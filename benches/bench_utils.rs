@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 pub static TINY_XML: &str = "tiny.hidden.xml";
 pub static MEDIUM_XML: &str = "medium.hidden.xml";
 pub static MEDIUM_UTF16: &str = "medium_utf16.hidden.xml";
