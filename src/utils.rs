@@ -1,5 +1,27 @@
 #![allow(clippy::wrong_self_convention)]
+mod encoding;
+#[cfg(test)]
+pub mod tests {
+    use std::path::PathBuf;
+
+    use tracing::{debug, info};
+    use tracing_subscriber::fmt;
+    use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+    pub fn setup_logger() {
+        static INIT: std::sync::Once = std::sync::Once::new();
+        INIT.call_once(|| {
+            let stdout_log = fmt::layer().pretty();
+            tracing_subscriber::registry().with(stdout_log).init();
+        });
+        info!("Logger initialized");
+        debug!("Logger initialized");
+    }
+    pub fn test_dir() -> std::path::PathBuf {
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests")
+    }
+}
 use quick_xml::{
+    escape::resolve_predefined_entity,
     events::{BytesPI, BytesText},
     name::QName,
 };
@@ -10,6 +32,7 @@ use crate::EditXMLError;
 pub type HashMap<K, V> = std::collections::HashMap<K, V>;
 #[cfg(feature = "ahash")]
 pub type HashMap<K, V> = ahash::AHashMap<K, V>;
+
 /// Trait for converting quick-xml types to string
 pub trait XMLStringUtils {
     /// Escapes non-ascii characters into their escape sequences
@@ -21,7 +44,9 @@ pub trait XMLStringUtils {
     fn unescape_to_string(&self) -> Result<String, EditXMLError> {
         let value = self.into_string()?;
         debug!("Unescaping: {}", value);
-        let unescape = quick_xml::escape::unescape(&value)?;
+        let unescape =
+            crate::utils::encoding::unescape_with(value.as_str(), resolve_predefined_entity)?;
+        debug!("Unescaped: {}", unescape);
         Ok(unescape.into_owned())
     }
 }

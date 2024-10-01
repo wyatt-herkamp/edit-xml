@@ -1,7 +1,8 @@
 use crate::document::{Document, Node};
 use crate::error::{EditXMLError, Result};
 use crate::utils::HashMap;
-
+mod debug;
+pub use debug::ElementDebug;
 #[derive(Debug)]
 pub(crate) struct ElementData {
     full_name: String,
@@ -53,7 +54,7 @@ pub struct ElementBuilder {
 impl ElementBuilder {
     fn new(full_name: String) -> ElementBuilder {
         ElementBuilder {
-             full_name,
+            full_name,
             attributes: HashMap::default(),
             namespace_decls: HashMap::default(),
             text_content: None,
@@ -230,6 +231,28 @@ impl Element {
             Some((prefix, name)) => (prefix, name),
             None => ("", full_name),
         }
+    }
+    /// Find all direct child element with name `name`.
+    pub fn find_children_by_name(&self, doc: &Document, name: &str) -> Vec<Element> {
+        self.children(doc)
+            .iter()
+            .filter_map(|n| n.as_element())
+            .filter(|e| e.name(doc) == name)
+            .collect()
+    }
+    /// Find first direct child element with name `name`.
+    pub fn find_first_child_by_name(&self, doc: &Document, name: &str) -> Option<Element> {
+        self.children(doc)
+            .iter()
+            .filter_map(|n| n.as_element())
+            .find(|e| e.name(doc) == name)
+    }
+    /// Creates an ElementDebug
+    pub fn debug<'element, 'doc>(
+        &'element self,
+        doc: &'doc Document,
+    ) -> ElementDebug<'element, 'doc> {
+        ElementDebug { element: self, doc }
     }
 }
 
@@ -558,11 +581,7 @@ impl Element {
     ///
     /// Panics if `index > self.children().len()`
     ///
-    /// # Errors
-    /// - [`Error::HasAParent`]: When you want to replace an element's parent with another,
-    ///     call `element.detach()` to make it parentless first.
-    ///     This is to make it explicit that you are changing an element's parent, not adding another.
-    /// - [`Error::ContainerCannotMove`]: The container element's parent must always be None.
+
     pub fn insert_child(&self, doc: &mut Document, index: usize, node: Node) -> Result<()> {
         if let Node::Element(elem) = node {
             if elem.is_container() {
@@ -612,10 +631,6 @@ impl Element {
     }
 
     /// Removes itself from its parent. Note that you can't attach this element to other documents.
-    ///
-    /// # Errors
-    ///
-    /// - [`Error::ContainerCannotMove`]: You can't detach container element
     pub fn detach(&self, doc: &mut Document) -> Result<()> {
         if self.is_container() {
             return Err(EditXMLError::ContainerCannotMove);

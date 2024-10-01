@@ -8,79 +8,8 @@ use std::fs::File;
 use std::io::{Read, Write};
 use std::path::Path;
 use std::str::FromStr;
-use tracing::{debug, instrument};
-
-/// Represents an XML node.
-#[derive(Debug)]
-pub enum Node {
-    /// XML Element
-    Element(Element),
-    /// XML Character Data ([specification](https://www.w3.org/TR/xml/#syntax))
-    Text(String),
-    /// Comments ([specification](https://www.w3.org/TR/xml/#sec-comments))
-    Comment(String),
-    /// CDATA ([specification](https://www.w3.org/TR/xml/#sec-cdata-sect))
-    CData(String),
-    /// Processing Instruction ([specification](https://www.w3.org/TR/xml/#sec-pi))
-    PI(String),
-    /// Document Type Declaration ([specification](https://www.w3.org/TR/xml/#sec-prolog-dtd))
-    DocType(String),
-}
-impl From<Element> for Node {
-    fn from(elem: Element) -> Self {
-        Node::Element(elem)
-    }
-}
-
-impl Node {
-    /// Useful to use inside `filter_map`.
-    ///
-    /// ```
-    /// use edit_xml::{Document, Element};
-    ///
-    /// let mut doc = Document::parse_str(r#"<?xml version="1.0" encoding="UTF-8"?>
-    /// <config>
-    ///     Random Text
-    ///     <max>1</max>
-    /// </config>
-    /// "#).unwrap();
-    ///
-    /// let elems: Vec<Element> = doc
-    ///     .root_element()
-    ///     .unwrap()
-    ///     .children(&doc)
-    ///     .iter()
-    ///     .filter_map(|n| n.as_element())
-    ///     .collect();
-    /// ```
-    pub fn as_element(&self) -> Option<Element> {
-        match self {
-            Self::Element(elem) => Some(*elem),
-            _ => None,
-        }
-    }
-    #[instrument]
-    pub(crate) fn build_text_content<'a>(&self, doc: &'a Document, buf: &'a mut String) {
-        debug!(?self);
-        match self {
-            Node::Element(elem) => elem.build_text_content(doc, buf),
-            Node::Text(text) => buf.push_str(text),
-            Node::CData(text) => buf.push_str(text),
-            Node::PI(text) => buf.push_str(text),
-            _ => {}
-        }
-    }
-
-    /// Returns content if node is `Text`, `CData`, or `PI`.
-    /// If node is `Element`, return [Element::text_content()]
-    ///
-    /// Implementation of [Node.textContent](https://developer.mozilla.org/en-US/docs/Web/API/Node/textContent)
-    pub fn text_content(&self, doc: &Document) -> String {
-        let mut buf = String::new();
-        self.build_text_content(doc, &mut buf);
-        buf
-    }
-}
+mod node;
+pub use node::*;
 
 /// Represents a XML document or a document fragment.
 ///
@@ -146,7 +75,7 @@ impl Document {
     /// which it uses to manage its root nodes.
     ///
     /// Its parent is None, and trying to change its parent will
-    /// return [`Error::ContainerCannotMove`].
+    /// result in an error.
     ///
     /// For the container element, only its `children` is relevant.
     /// Other attributes are not used.
@@ -190,10 +119,6 @@ impl Document {
 /// Call `parse_*_with_opts` with custom [`ReadOptions`] to change parser behaviour.
 /// Otherwise, [`ReadOptions::default()`] is used.
 ///
-/// # Errors
-/// - [`Error::CannotDecode`]: Could not decode XML. XML declaration may have invalid encoding value.
-/// - [`Error::MalformedXML`]: Could not read XML.
-/// - [`Error::Io`]: IO Error
 impl Document {
     pub fn parse_str(str: &str) -> Result<Document> {
         DocumentParser::parse_reader(str.as_bytes(), ReadOptions::default())
@@ -229,7 +154,7 @@ pub struct WriteOptions {
     /// XML declaration should be written at the top. (default: `true`)
     pub write_decl: bool,
 }
-impl Default for WriteOptions{
+impl Default for WriteOptions {
     fn default() -> Self {
         Self {
             indent_char: b' ',
@@ -277,7 +202,7 @@ impl Document {
     }
 
     fn write_decl(&self, writer: &mut Writer<impl Write>) -> Result<()> {
-        let standalone =self.standalone.map(|v| v.as_str());
+        let standalone = self.standalone.map(|v| v.as_str());
         writer.write_event(Event::Decl(BytesDecl::new(
             &self.version,
             Some("UTF-8"),

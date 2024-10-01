@@ -16,6 +16,10 @@ pub fn setup_logger() {
     info!("Logger initialized");
     debug!("Logger initialized");
 }
+pub fn test_dir() -> std::path::PathBuf {
+    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests")
+}
+
 pub fn iter_read_options() -> impl Iterator<Item = ReadOptions> {
     let empty_text_node_opts = [true, false];
     let trim_text = [true, false];
@@ -35,7 +39,4 @@ pub fn iter_read_options() -> impl Iterator<Item = ReadOptions> {
         read_options.require_decl = raw[3];
         read_options
     })
-}
-pub fn test_dir() -> std::path::PathBuf {
-    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests")
 }

@@ -119,7 +119,7 @@ impl<R: Read> BufRead for DecodeReader<R> {
 /// Options when parsing xml.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ReadOptions {
-    /// <tag></tag> will have a Node::Text("") as its children, while <tag /> won't.
+    /// `<tag></tag>` will have a Node::Text("") as its children, while `<tag />` won't.
     /// Default: `true`
     pub empty_text_node: bool,
     /// Trims leading and ending whitespaces in `Node::Text`, and ignore node if it is empty.
@@ -139,7 +139,19 @@ pub struct ReadOptions {
     /// Default: `None`
     pub encoding: Option<String>,
 }
-impl Default for ReadOptions{
+impl ReadOptions {
+    /// New ReadOptions that is relaxed by not requiring XML declaration.
+    pub fn relaxed() -> Self {
+        ReadOptions {
+            empty_text_node: true,
+            trim_text: true,
+            ignore_whitespace_only: true,
+            require_decl: false,
+            encoding: None,
+        }
+    }
+}
+impl Default for ReadOptions {
     fn default() -> Self {
         ReadOptions {
             empty_text_node: true,

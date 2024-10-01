@@ -64,11 +64,11 @@ mod document;
 mod element;
 mod error;
 mod parser;
-pub mod utils;
 pub mod types;
+pub mod utils;
 
-pub use crate::document::{Document, Node, WriteOptions};
-pub use crate::element::{Element, ElementBuilder};
+pub use crate::document::{Document, Node, NodeDebug, WriteOptions};
+pub use crate::element::{Element, ElementBuilder, ElementDebug};
 pub use crate::error::{EditXMLError, Result};
 pub use crate::parser::{normalize_space, ReadOptions};
 

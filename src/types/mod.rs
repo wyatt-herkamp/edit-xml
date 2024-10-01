@@ -1,11 +1,10 @@
-
 use crate::{error::MalformedReason, EditXMLError};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
-pub enum StandaloneValue{
+pub enum StandaloneValue {
     Yes,
     #[default]
-    No
+    No,
 }
 impl StandaloneValue {
     pub fn as_str(&self) -> &'static str {
@@ -70,7 +69,13 @@ mod tests {
         assert_eq!(no.is_standalone(), false);
         let yes_str = "yes";
         let no_str = "no";
-        assert_eq!(StandaloneValue::try_from(yes_str).unwrap(), StandaloneValue::Yes);
-        assert_eq!(StandaloneValue::try_from(no_str).unwrap(), StandaloneValue::No);
+        assert_eq!(
+            StandaloneValue::try_from(yes_str).unwrap(),
+            StandaloneValue::Yes
+        );
+        assert_eq!(
+            StandaloneValue::try_from(no_str).unwrap(),
+            StandaloneValue::No
+        );
     }
 }

@@ -1,10 +1,10 @@
 use edit_xml::utils::HashMap;
 use edit_xml::{Document, Element, Node, ReadOptions};
-use tracing::info;
 use std::fmt;
 use std::fmt::Write;
 use std::path::Path;
 use std::str::FromStr;
+use tracing::info;
 mod test_utils;
 
 #[derive(Clone)]
@@ -179,13 +179,14 @@ where
         };
         if expected != result {
             println!("Options: {:?}", read_options);
-            println!("===expected===\n
+            println!(
+                "===expected===\n
             {:?}\n
             ===result===\n
-            {:?}", expected, result);
-
+            {:?}",
+                expected, result
+            );
         }
-
     }
     // Test write
     let doc = Document::parse_file(&xml_file).unwrap();

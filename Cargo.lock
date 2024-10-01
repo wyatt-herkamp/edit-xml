@@ -253,6 +253,7 @@ dependencies = [
  "encoding_rs",
  "itertools 0.13.0",
  "markup5ever",
+ "memchr",
  "minidom",
  "quick-xml",
  "roxmltree",

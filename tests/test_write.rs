@@ -31,4 +31,3 @@ fn test_escape() {
     println!("{}", xml);
     assert_eq!(xml, expected);
 }
-
