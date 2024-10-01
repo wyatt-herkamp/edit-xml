@@ -1,5 +1,5 @@
 #![allow(clippy::wrong_self_convention)]
-mod encoding;
+pub mod encoding;
 #[cfg(test)]
 pub mod tests {
     use std::path::PathBuf;
@@ -20,6 +20,9 @@ pub mod tests {
         PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests")
     }
 }
+use core::str;
+use std::ops::Deref;
+
 use quick_xml::{
     escape::resolve_predefined_entity,
     events::{BytesPI, BytesText},
@@ -38,7 +41,6 @@ pub trait XMLStringUtils {
     /// Escapes non-ascii characters into their escape sequences
     fn escape_ascii_into_string(&self) -> Result<String, EditXMLError>;
     /// Converts the type into a string
-
     fn into_string(&self) -> Result<String, EditXMLError>;
     /// Unescapes the content of the type into a string
     fn unescape_to_string(&self) -> Result<String, EditXMLError> {
@@ -59,6 +61,9 @@ impl XMLStringUtils for BytesText<'_> {
     fn into_string(&self) -> Result<String, EditXMLError> {
         String::from_utf8(self.to_vec()).map_err(EditXMLError::from)
     }
+    fn unescape_to_string(&self) -> Result<String, EditXMLError> {
+        bytes_to_unescaped_string(self.deref())
+    }
 }
 impl XMLStringUtils for QName<'_> {
     fn escape_ascii_into_string(&self) -> Result<String, EditXMLError> {
@@ -67,6 +72,10 @@ impl XMLStringUtils for QName<'_> {
 
     fn into_string(&self) -> Result<String, EditXMLError> {
         String::from_utf8(self.0.to_vec()).map_err(EditXMLError::from)
+    }
+
+    fn unescape_to_string(&self) -> Result<String, EditXMLError> {
+        bytes_to_unescaped_string(self.0)
     }
 }
 impl XMLStringUtils for BytesPI<'_> {
@@ -77,10 +86,14 @@ impl XMLStringUtils for BytesPI<'_> {
     fn into_string(&self) -> Result<String, EditXMLError> {
         Ok(String::from_utf8(self.to_vec())?)
     }
+
+    fn unescape_to_string(&self) -> Result<String, EditXMLError> {
+        bytes_to_unescaped_string(self.content())
+    }
 }
 pub(crate) fn bytes_to_unescaped_string(cow: &[u8]) -> Result<String, EditXMLError> {
-    let value = String::from_utf8(cow.to_vec())?;
+    let value = str::from_utf8(cow).map_err(EditXMLError::from)?;
 
-    let unescape = quick_xml::escape::unescape(&value)?;
+    let unescape = crate::utils::encoding::unescape_with(value, resolve_predefined_entity)?;
     Ok(unescape.into_owned())
 }

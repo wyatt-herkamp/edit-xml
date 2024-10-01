@@ -2,6 +2,7 @@ use crate::element::{Element, ElementData};
 use crate::error::{EditXMLError, Result};
 use crate::parser::{DocumentParser, ReadOptions};
 use crate::types::StandaloneValue;
+use crate::ElementBuilder;
 use quick_xml::events::{BytesCData, BytesDecl, BytesEnd, BytesPI, BytesStart, BytesText, Event};
 use quick_xml::Writer;
 use std::fs::File;
@@ -69,6 +70,33 @@ impl Document {
         Document::default()
     }
 
+    /// Create a new xml document with a root element.
+    ///
+    /// # Examples
+    /// ```
+    /// use edit_xml::Document;
+    /// let mut doc = Document::new_with_root("root", |root| {
+    ///    root.attribute("id", "main")
+    ///     .attribute("class", "main")
+    ///     .create_element("name", |elem| {
+    ///         elem.add_text("Cool Name")
+    ///     })
+    /// });
+    /// let root = doc.root_element().unwrap();
+    /// let name = root.find(&doc, "name").unwrap();
+    /// assert_eq!(name.text_content(&doc), "Cool Name");
+    /// ```
+    pub fn new_with_root<N, F>(root_name: N, f: F) -> Document
+    where
+        N: Into<String>,
+        F: FnOnce(ElementBuilder) -> ElementBuilder,
+    {
+        let mut doc = Document::new();
+        let root = f(ElementBuilder::new(root_name)).finish(&mut doc);
+        doc.push_root_node(root).unwrap();
+        doc
+    }
+
     /// Get 'container' element of Document.
     ///
     /// The document uses an invisible 'container' element
@@ -104,7 +132,8 @@ impl Document {
     /// Push a node to end of root nodes.
     /// If doc has no [`Element`], pushing a [`Node::Element`] is
     /// equivalent to setting it as root element.
-    pub fn push_root_node(&mut self, node: Node) -> Result<()> {
+    pub fn push_root_node(&mut self, node: impl Into<Node>) -> Result<()> {
+        let node = node.into();
         let elem = self.container;
         elem.push_child(self, node)
     }

@@ -2,7 +2,7 @@ use edit_xml::{Document, Element, Node};
 mod test_utils;
 
 #[test]
-fn test_escape() {
+fn test_escape() -> anyhow::Result<()> {
     test_utils::setup_logger();
     let expected = r#"<?xml version="1.0" encoding="UTF-8"?>
 <root attr="&amp;gt;&amp;lt;&amp;amp;&amp;quot;&amp;apos;attrval">
@@ -18,7 +18,7 @@ fn test_escape() {
         .push_to(&mut doc, container);
     Element::build("inner")
         .namespace_decl("ns", "><&\"'nsval")
-        .text_content("><&\"'text")
+        .add_text("><&\"'text")
         .push_to(&mut doc, root);
     doc.push_root_node(Node::Comment("<&amp;".to_string()))
         .unwrap();
@@ -30,4 +30,5 @@ fn test_escape() {
     let xml = doc.write_str().unwrap();
     println!("{}", xml);
     assert_eq!(xml, expected);
+    Ok(())
 }

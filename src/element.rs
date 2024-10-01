@@ -1,8 +1,11 @@
 use crate::document::{Document, Node};
 use crate::error::{EditXMLError, Result};
 use crate::utils::HashMap;
+mod builder;
 mod debug;
+pub use builder::ElementBuilder;
 pub use debug::ElementDebug;
+
 #[derive(Debug)]
 pub(crate) struct ElementData {
     full_name: String,
@@ -11,106 +14,6 @@ pub(crate) struct ElementData {
     parent: Option<Element>,
     children: Vec<Node>,
 }
-
-/// An easy way to build a new element
-/// by chaining methods to add properties.
-///
-/// Call [`Element::build()`] to start building.
-/// To finish building, either call `.finish()` or `.push_to(parent)`
-/// which returns [`Element`].
-///
-/// # Examples
-///
-/// ```
-/// use edit_xml::{Document, Element, Node};
-///
-/// let mut doc = Document::new();
-///
-/// let root = Element::build("root")
-///     .attribute("id", "main")
-///     .attribute("class", "main")
-///     .finish(&mut doc);
-/// doc.push_root_node(root.as_node());
-///
-/// let name = Element::build("name")
-///     .text_content("No Name")
-///     .push_to(&mut doc, root);
-///
-/// /* Equivalent xml:
-///   <root id="main" class="main">
-///     <name>No Name</name>
-///   </root>
-/// */
-/// ```
-///
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct ElementBuilder {
-    full_name: String,
-    attributes: HashMap<String, String>,
-    namespace_decls: HashMap<String, String>,
-    text_content: Option<String>,
-}
-
-impl ElementBuilder {
-    fn new(full_name: String) -> ElementBuilder {
-        ElementBuilder {
-            full_name,
-            attributes: HashMap::default(),
-            namespace_decls: HashMap::default(),
-            text_content: None,
-        }
-    }
-
-    /// Removes previous prefix if it exists, and attach new prefix.
-    pub fn prefix(mut self, prefix: &str) -> Self {
-        let (_, name) = Element::separate_prefix_name(&self.full_name);
-        if prefix.is_empty() {
-            self.full_name = name.to_string();
-        } else {
-            self.full_name = format!("{}{}", prefix, name);
-        }
-        self
-    }
-
-    pub fn attribute<S, T>(mut self, name: S, value: T) -> Self
-    where
-        S: Into<String>,
-        T: Into<String>,
-    {
-        self.attributes.insert(name.into(), value.into());
-        self
-    }
-
-    pub fn namespace_decl<S, T>(mut self, prefix: S, namespace: T) -> Self
-    where
-        S: Into<String>,
-        T: Into<String>,
-    {
-        self.namespace_decls.insert(prefix.into(), namespace.into());
-        self
-    }
-
-    pub fn text_content<S: Into<String>>(mut self, text: S) -> Self {
-        self.text_content = Some(text.into());
-        self
-    }
-
-    pub fn finish(self, doc: &mut Document) -> Element {
-        let elem = Element::with_data(doc, self.full_name, self.attributes, self.namespace_decls);
-        if let Some(text) = self.text_content {
-            elem.push_child(doc, Node::Text(text)).unwrap();
-        }
-        elem
-    }
-
-    /// Push this element to the parent's children.
-    pub fn push_to(self, doc: &mut Document, parent: Element) -> Element {
-        let elem = self.finish(doc);
-        elem.push_to(doc, parent).unwrap();
-        elem
-    }
-}
-
 /// Represents an XML element. It acts as a pointer to actual element data stored in Document.
 ///
 /// This struct only contains a unique `usize` id and implements trait `Copy`.
@@ -157,6 +60,20 @@ impl Element {
     /// everything before that will be interpreted as a namespace prefix.
     pub fn new<S: Into<String>>(doc: &mut Document, full_name: S) -> Self {
         Self::with_data(doc, full_name.into(), HashMap::new(), HashMap::new())
+    }
+    /// Create a new element with `full_name` and `text`.
+    ///
+    /// ```
+    /// use edit_xml::{Document, Element};
+    /// let mut doc = Document::new();
+    ///
+    /// let elem = Element::new_with_text(&mut doc, "name", "value");
+    /// assert_eq!(elem.text_content(&doc), "value");
+    /// ```
+    pub fn new_with_text(doc: &mut Document, full_name: &str, text: &str) -> Self {
+        let elem = Self::new(doc, full_name);
+        elem.set_text_content(doc, text);
+        elem
     }
 
     /// Chain methods to build an element easily.
@@ -232,22 +149,10 @@ impl Element {
             None => ("", full_name),
         }
     }
-    /// Find all direct child element with name `name`.
-    pub fn find_children_by_name(&self, doc: &Document, name: &str) -> Vec<Element> {
-        self.children(doc)
-            .iter()
-            .filter_map(|n| n.as_element())
-            .filter(|e| e.name(doc) == name)
-            .collect()
-    }
-    /// Find first direct child element with name `name`.
-    pub fn find_first_child_by_name(&self, doc: &Document, name: &str) -> Option<Element> {
-        self.children(doc)
-            .iter()
-            .filter_map(|n| n.as_element())
-            .find(|e| e.name(doc) == name)
-    }
-    /// Creates an ElementDebug
+
+    /// Creates an [ElementDebug]
+    ///
+    /// Used to debug an element with its children.
     pub fn debug<'element, 'doc>(
         &'element self,
         doc: &'doc Document,
@@ -519,6 +424,24 @@ impl Element {
     }
 
     /// Find first direct child element with name `name`.
+    ///
+    ///
+    /// # Example
+    /// ```
+    /// use edit_xml::{Document, Element, ElementBuilder};
+    /// let mut doc = Document::new_with_root("root", |root| {
+    ///     root.create_element("child", |elem| {
+    ///        elem.add_text("Hello")
+    ///    })
+    /// });
+    ///
+    /// let root = doc.root_element().unwrap();
+    /// let child = root.find(&doc, "child");
+    /// assert!(child.is_some());
+    /// let child = child.unwrap();
+    /// assert_eq!(child.text_content(&doc), "Hello");
+    /// ```
+    ///
     pub fn find(&self, doc: &Document, name: &str) -> Option<Element> {
         self.children(doc)
             .iter()
@@ -527,6 +450,26 @@ impl Element {
     }
 
     /// Find all direct child element with name `name`.
+    /// # Example
+    /// ```
+    /// use edit_xml::{Document, Element, ElementBuilder};
+    /// let mut doc = Document::new_with_root("root", |mut root| {
+    ///    for i in 0..3 {
+    ///        root = root.create_element("child", |elem| {
+    ///           elem.add_text(i.to_string())
+    ///       });
+    ///   }
+    ///   root
+    /// });
+    ///
+    /// let root = doc.root_element().unwrap();
+    /// let child = root.find_all(&doc, "child");
+    /// assert_eq!(child.len(), 3);
+    /// assert_eq!(child[0].text_content(&doc), "0");
+    /// assert_eq!(child[1].text_content(&doc), "1");
+    /// assert_eq!(child[2].text_content(&doc), "2");
+    /// ```
+    ///
     pub fn find_all(&self, doc: &Document, name: &str) -> Vec<Element> {
         self.children(doc)
             .iter()
@@ -544,44 +487,62 @@ impl Element {
 /// where an element's parent doesn't have the element as its children.
 impl Element {
     /// Equivalent to `vec.push()`.
+    ///
+    ///
     /// # Errors
     ///    - [EditXMLError::HasAParent]: When you want to replace an element's parent with another,
     ///         call `element.detach()` to make it parentless first.
     ///         This is to make it explicit that you are changing an element's parent, not adding another.
     ///    - [EditXMLError::ContainerCannotMove]: The container element's parent must always be None.
-    pub fn push_child(&self, doc: &mut Document, node: Node) -> Result<()> {
-        if let Node::Element(elem) = node {
-            if elem.is_container() {
-                return Err(EditXMLError::ContainerCannotMove);
-            }
-            let data = elem.mut_data(doc);
-            if data.parent.is_some() {
-                return Err(EditXMLError::HasAParent);
-            }
-            data.parent = Some(*self);
+    pub fn push_child(&self, doc: &mut Document, node: impl Into<Node>) -> Result<()> {
+        let node = node.into();
+        if let Node::Element(new_child) = node {
+            return self.push_child_element(doc, new_child);
         }
         self.mut_data(doc).children.push(node);
         Ok(())
     }
-
-    /// Equivalent to `parent.push_child()`.
-    ///
-    /// # Errors
-    ///    - [EditXMLError::HasAParent]: When you want to replace an element's parent with another,
-    ///        call `element.detach()` to make it parentless first.
-    ///        This is to make it explicit that you are changing an element's parent, not adding another.
-    ///    - [EditXMLError::ContainerCannotMove]: The container element's parent must always be None.
-    pub fn push_to(&self, doc: &mut Document, parent: Element) -> Result<()> {
-        parent.push_child(doc, self.as_node())
+    pub(crate) fn push_child_element(&self, doc: &mut Document, new_child: Element) -> Result<()> {
+        if new_child.is_container() {
+            return Err(EditXMLError::ContainerCannotMove);
+        }
+        let child_data = new_child.mut_data(doc);
+        if child_data.parent.is_some() {
+            return Err(EditXMLError::HasAParent);
+        }
+        child_data.parent = Some(*self);
+        self.mut_data(doc).children.push(Node::Element(new_child));
+        Ok(())
     }
-
+    /// Creates a new child element with `name` and pushes it to this element.
+    ///
+    /// # Example
+    /// ```
+    /// use edit_xml::{Document, Element, ElementBuilder};
+    /// let mut doc = Document::new();
+    /// let root = ElementBuilder::new("root").finish(&mut doc);
+    /// root.create_child(&mut doc, "child", |elem| {
+    ///    elem.add_text("Hello")
+    /// });
+    /// let child = root.find(&doc, "child").unwrap();
+    /// let children_of_the_child = child.children(&doc);
+    /// assert_eq!(children_of_the_child.len(), 1);
+    /// assert_eq!(children_of_the_child[0].text_content(&doc), "Hello");
+    /// ```
+    pub fn create_child<N, F>(&self, doc: &mut Document, name: N, f: F)
+    where
+        N: Into<String>,
+        F: FnOnce(ElementBuilder) -> ElementBuilder,
+    {
+        let elem = f(ElementBuilder::new(name.into()));
+        let elem = elem.finish(doc);
+        self.push_child_element(doc, elem).unwrap();
+    }
     /// Equivalent to `vec.insert()`.
     ///
     /// # Panics
     ///
     /// Panics if `index > self.children().len()`
-    ///
-
     pub fn insert_child(&self, doc: &mut Document, index: usize, node: Node) -> Result<()> {
         if let Node::Element(elem) = node {
             if elem.is_container() {
@@ -751,7 +712,7 @@ mod tests {
     }
 
     #[test]
-    fn test_mutate_tree() {
+    fn test_mutate_tree() -> anyhow::Result<()> {
         // Test tree consistency after mutating tree
         let mut doc = Document::new();
         let container = doc.container();
@@ -778,9 +739,8 @@ mod tests {
         assert_eq!(root.children(&doc).len(), 0);
         assert_eq!(a.parent(&doc), None);
 
-        // Element.push_to
-        let a = Element::new(&mut doc, "a");
-        a.push_to(&mut doc, root).unwrap();
+        // Element.push_child
+        root.push_child(&mut doc, Node::Element(a)).unwrap();
         assert_eq!(root.children(&doc)[0].as_element().unwrap(), a);
         assert_eq!(a.parent(&doc).unwrap(), root);
 
@@ -799,5 +759,6 @@ mod tests {
         a.detach(&mut doc).unwrap();
         assert_eq!(root.children(&doc).len(), 0);
         assert_eq!(a.parent(&doc), None);
+        Ok(())
     }
 }

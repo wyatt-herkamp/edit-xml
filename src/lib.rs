@@ -24,7 +24,7 @@
 //!
 //! // Add a new element
 //! let series = Element::build("series")
-//!     .text_content("Lord of the Rings")
+//!     .add_text("Lord of the Rings")
 //!     .push_to(&mut doc, metadata);
 //!
 //! // Modify existing element

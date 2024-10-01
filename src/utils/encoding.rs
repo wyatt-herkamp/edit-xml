@@ -1,40 +1,31 @@
 use std::borrow::Cow;
 
-use quick_xml::escape::EscapeError;
+use quick_xml::escape::{EscapeError, ParseCharRefError};
 
 #[inline]
-#[cfg(feature = "soft-fail-unescape")]
-fn from_str_radix(src: &str, radix: u32) -> Result<u32, quick_xml::escape::ParseCharRefError> {
+fn from_str_radix(src: &str, radix: u32) -> Result<u32, ParseCharRefError> {
     match src.as_bytes().first().copied() {
         // We should not allow sign numbers, but u32::from_str_radix will accept `+`.
         // We also handle `-` to be consistent in returned errors
-        Some(b'+') | Some(b'-') => Err(quick_xml::escape::ParseCharRefError::UnexpectedSign),
-        _ => u32::from_str_radix(src, radix)
-            .map_err(quick_xml::escape::ParseCharRefError::InvalidNumber),
+        Some(b'+') | Some(b'-') => Err(ParseCharRefError::UnexpectedSign),
+        _ => u32::from_str_radix(src, radix).map_err(ParseCharRefError::InvalidNumber),
     }
 }
-#[inline]
-#[cfg(feature = "soft-fail-unescape")]
-pub fn memchr2_iter<'h>(needle1: u8, needle2: u8, haystack: &'h [u8]) -> memchr::Memchr2<'h> {
-    memchr::Memchr2::new(needle1, needle2, haystack)
-}
-#[cfg(feature = "soft-fail-unescape")]
-fn parse_number(num: &str) -> Result<char, quick_xml::escape::ParseCharRefError> {
+fn parse_number(num: &str) -> Result<char, ParseCharRefError> {
     let code = if let Some(hex) = num.strip_prefix('x') {
         from_str_radix(hex, 16)?
     } else {
         from_str_radix(num, 10)?
     };
     if code == 0 {
-        return Err(quick_xml::escape::ParseCharRefError::IllegalCharacter(code));
+        return Err(ParseCharRefError::IllegalCharacter(code));
     }
     match std::char::from_u32(code) {
         Some(c) => Ok(c),
-        None => Err(quick_xml::escape::ParseCharRefError::InvalidCodepoint(code)),
+        None => Err(ParseCharRefError::InvalidCodepoint(code)),
     }
 }
 /// Will unescape the given string and ignore any unknown entities
-#[cfg(feature = "soft-fail-unescape")]
 pub fn unescape_with_and_ignore<'input, 'entity, F>(
     raw: &'input str,
     mut resolve_entity: F,
@@ -46,7 +37,7 @@ where
     let bytes = raw.as_bytes();
     let mut unescaped = None;
     let mut last_end = 0;
-    let mut iter = memchr2_iter(b'&', b';', bytes);
+    let mut iter = memchr::Memchr2::new(b'&', b';', bytes);
     while let Some(start) = iter.by_ref().find(|p| bytes[*p] == b'&') {
         match iter.next() {
             Some(end) if bytes[end] == b';' => {
@@ -125,8 +116,8 @@ mod tests {
         let doc = Document::parse_str_with_opts(&file, ReadOptions::relaxed()).unwrap();
         let root = doc.root_element().context("Root Element not found")?;
         let developers = root
-            .find_first_child_by_name(&doc, "developers")
-            .context("Missing developers")?;
+            .find(&doc, "developers")
+            .context("Developers Element not found")?;
 
         for children in developers.children(&doc) {
             println!("{:#?}", children.debug(&doc));
