@@ -18,22 +18,22 @@ quick-xml = "0.36"
 encoding_rs = "0.8"
 thiserror = "1"
 tracing = "0.1"
-ahash = {version = "0.8", optional = true}
+ahash = { version = "0.8", optional = true }
 [features]
 default = ["ahash"]
+escape-html = ["quick-xml/escape-html"]
 [dev-dependencies]
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 tracing-appender = "0.2"
 itertools = "0.13"
-
+anyhow = "1"
 minidom = "0.16"
 roxmltree = "0.20"
 xmltree = "0.11"
-xml_dom = "0.2"         # avoid quick-xml version conflict
+xml_dom = "0.2"                                                     # avoid quick-xml version conflict
 # parsers
 xml5ever = "0.20"
 markup5ever = "0.14"
-quick-xml = "0.36"
 xml_rs = { version = "0.8", package = "xml-rs" }
 
 criterion = "0.5"
