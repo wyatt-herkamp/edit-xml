@@ -47,7 +47,7 @@ impl Debug for ElementDebug<'_, '_> {
         // Full debug of the children
         let children: Vec<_> = element
             .children(doc)
-            .into_iter()
+            .iter()
             .map(|child| child.debug(doc))
             .collect();
         f.debug_struct("Element")

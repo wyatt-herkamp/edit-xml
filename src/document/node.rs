@@ -1,11 +1,14 @@
 use std::{borrow::Cow, fmt::Debug};
-
-use tracing::{debug, instrument};
+#[cfg(feature = "document-breakdown")]
+mod breakdown;
+#[cfg(feature = "document-breakdown")]
+pub use breakdown::*;
+use tracing::instrument;
 
 use crate::{element::ElementDebug, Document, Element};
 
 /// Represents an XML node.
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Node {
     /// XML Element
     Element(Element),
@@ -23,6 +26,11 @@ pub enum Node {
 impl From<Element> for Node {
     fn from(elem: Element) -> Self {
         Node::Element(elem)
+    }
+}
+impl From<&Element> for Node {
+    fn from(elem: &Element) -> Self {
+        Node::Element(*elem)
     }
 }
 macro_rules! enum_is {
@@ -69,7 +77,6 @@ impl Node {
     }
     #[instrument]
     pub(crate) fn build_text_content<'a>(&self, doc: &'a Document, buf: &'a mut String) {
-        debug!(?self);
         match self {
             Node::Element(elem) => elem.build_text_content(doc, buf),
             Node::Text(text) => buf.push_str(text),

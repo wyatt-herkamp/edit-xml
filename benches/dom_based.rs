@@ -2,7 +2,6 @@ use bench_utils::{bench, LARGE_XML, MEDIUM_UTF16, MEDIUM_XML, TINY_XML};
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use std::fs::File;
 use std::path::Path;
-use std::u32;
 mod bench_utils;
 
 //fn minidom_parse(path: &Path) {
@@ -25,7 +24,7 @@ bench!(MEDIUM_XML, medium_edit_xml, edit_xml_parse);
 bench!(MEDIUM_UTF16, large_edit_xml, edit_xml_parse);
 bench!(LARGE_XML, utf16_edit_xml, edit_xml_parse);
 
-fn roxmltree_parse<'a>(path: &Path) {
+fn roxmltree_parse(path: &Path) {
     // roxmltree doesn't implement reading from reader.
     let xml = std::fs::read_to_string(path).unwrap();
     let doc = roxmltree::Document::parse_with_options(

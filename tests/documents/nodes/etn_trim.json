@@ -1,0 +1,36 @@
+{
+  "standalone_version": null,
+  "version": "1.0",
+  "root_elements": [
+    {
+      "type": "Element",
+      "value": {
+        "name": "el",
+        "attributes": {},
+        "namespace_decls": {},
+        "children": [],
+        "is_root_element": true
+      }
+    },
+    {
+      "type": "Text",
+      "value": "Text"
+    },
+    {
+      "type": "Comment",
+      "value": " Comment "
+    },
+    {
+      "type": "DocType",
+      "value": "doctype"
+    },
+    {
+      "type": "CData",
+      "value": "<tag>text</tag>"
+    },
+    {
+      "type": "PI",
+      "value": "xml-stylesheet type=\"text/xsl\""
+    }
+  ]
+}

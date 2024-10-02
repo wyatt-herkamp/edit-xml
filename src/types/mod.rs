@@ -1,6 +1,8 @@
 use crate::{error::MalformedReason, EditXMLError};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", serde(rename_all = "lowercase"))]
 pub enum StandaloneValue {
     Yes,
     #[default]
@@ -65,8 +67,8 @@ mod tests {
         assert_eq!(no.as_str(), "no");
         assert_eq!(yes.as_bytes(), b"yes");
         assert_eq!(no.as_bytes(), b"no");
-        assert_eq!(yes.is_standalone(), true);
-        assert_eq!(no.is_standalone(), false);
+        assert!(yes.is_standalone());
+        assert!(!no.is_standalone());
         let yes_str = "yes";
         let no_str = "no";
         assert_eq!(

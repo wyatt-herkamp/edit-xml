@@ -15,17 +15,16 @@ mod xml_rs_bench {
         let file = BufReader::new(file);
 
         let parser = EventReader::new(file);
-        for e in parser {
-            match e {
-                Ok(XmlEvent::StartElement {
-                    name, attributes, ..
-                }) => {
-                    counter += name.local_name.len();
-                    for attr in attributes {
-                        counter += attr.value.len();
-                    }
+
+        for e in parser.into_iter().flatten() {
+            if let XmlEvent::StartElement {
+                name, attributes, ..
+            } = e
+            {
+                counter += name.local_name.len();
+                for attr in attributes {
+                    counter += attr.value.len();
                 }
-                _ => (),
             }
         }
         counter
@@ -89,16 +88,13 @@ mod xml5ever_bench {
     impl TokenSink for TokenCounter {
         fn process_token(&self, token: Token) {
             // THE NEWEST VERSION ISNT MUTABLE.  So Using an Arc to make things less annoying
-            match token {
-                TagToken(tag) => {
-                    let mut add = tag.name.local.as_ref().len();
-                    for attr in tag.attrs {
-                        add += attr.value.len()
-                    }
-                    self.counter
-                        .fetch_add(add, std::sync::atomic::Ordering::Relaxed);
+            if let TagToken(tag) = token {
+                let mut add = tag.name.local.as_ref().len();
+                for attr in tag.attrs {
+                    add += attr.value.len()
                 }
-                _ => (),
+                self.counter
+                    .fetch_add(add, std::sync::atomic::Ordering::Relaxed);
             }
         }
     }
@@ -108,18 +104,16 @@ mod xml5ever_bench {
             counter: Arc::new(AtomicUsize::default()),
         };
 
-        let mut file = File::open(&path).ok().expect("can't open file");
+        let mut file = File::open(path).expect("can't open file");
         let mut input = ByteTendril::new();
-        file.read_to_tendril(&mut input)
-            .ok()
-            .expect("can't read file");
-        let mut input_buffer = BufferQueue::default();
+        file.read_to_tendril(&mut input).expect("can't read file");
+        let input_buffer = BufferQueue::default();
         input_buffer.push_back(input.try_reinterpret().unwrap());
         let tok = XmlTokenizer::new(sink.clone(), Default::default());
-        tok.feed(&mut input_buffer);
+        tok.feed(&input_buffer);
         tok.end();
 
-        return sink.counter.load(std::sync::atomic::Ordering::Relaxed);
+        sink.counter.load(std::sync::atomic::Ordering::Relaxed)
     }
 }
 use xml5ever_bench::xml5ever_parser;

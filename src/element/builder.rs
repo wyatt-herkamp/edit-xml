@@ -216,7 +216,7 @@ impl ElementBuilder {
         F: FnOnce(ElementBuilder) -> ElementBuilder,
     {
         let builder = f(ElementBuilder::new(name));
-        return self.add_element(builder);
+        self.add_element(builder)
     }
     /// Finish building the element and return it.
     /// The result must be pushed to a parent element or the root node.
@@ -267,7 +267,7 @@ impl ElementBuilder {
     /// assert_eq!(doc.root_element().unwrap(), root);
     pub fn push_to_root_node(self, doc: &mut Document) -> Element {
         let elem = self.finish(doc);
-        doc.push_root_node(Node::Element(elem.clone()))
+        doc.push_root_node(Node::Element(elem))
             .expect("Illegal Parameter put in ElementBuilder");
         elem
     }
@@ -287,7 +287,7 @@ mod tests {
     fn test_element_builder() -> anyhow::Result<()> {
         let mut doc = start();
 
-        ElementBuilder::new("root")
+        let element = ElementBuilder::new("root")
             .attribute("id", "main")
             .attribute("class", "main")
             .create_element("tests", |new| {
@@ -295,6 +295,11 @@ mod tests {
             })
             .add_comment("This is a comment")
             .push_to_root_node(&mut doc);
+
+        let new_element = ElementBuilder::new("hello")
+            .add_text("world")
+            .finish(&mut doc);
+        element.push_child(&mut doc, new_element)?;
         let to_string = doc.write_str()?;
 
         println!("{}", to_string);

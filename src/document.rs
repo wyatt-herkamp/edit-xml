@@ -9,6 +9,10 @@ use std::fs::File;
 use std::io::{Read, Write};
 use std::path::Path;
 use std::str::FromStr;
+#[cfg(feature = "document-breakdown")]
+mod breakdown;
+#[cfg(feature = "document-breakdown")]
+pub use breakdown::*;
 mod node;
 pub use node::*;
 

@@ -23,8 +23,11 @@ fn test_closing_tag_mismatch_err() {
 
     // no closing tag
     let xml = "<img>";
-    let mut opts = ReadOptions::default();
-    opts.require_decl = false;
+    let opts = ReadOptions {
+        require_decl: false,
+        ..Default::default()
+    };
+
     let doc = Document::parse_str_with_opts(xml, opts.clone());
     assert!(doc.is_err());
 
@@ -48,8 +51,10 @@ fn test_unescape() {
     <!-- <&amp; cmt -->
     <!DOCTYPE &amp;>
     <?<&amp;?>"#;
-    let mut opts = ReadOptions::default();
-    opts.require_decl = false;
+    let opts = ReadOptions {
+        require_decl: false,
+        ..Default::default()
+    };
     let doc = Document::parse_str_with_opts(xml, opts).unwrap();
 
     let abc = doc.root_element().unwrap();
@@ -66,14 +71,14 @@ fn test_unescape() {
     if let Node::Comment(cmt) = comment {
         assert_eq!(cmt, " <&amp; cmt ");
     } else {
-        assert!(false);
+        panic!("Expected comment");
     }
 
     let doctype = &doc.root_nodes()[3];
     if let Node::DocType(doc) = doctype {
         assert_eq!(doc, "&");
     } else {
-        assert!(false);
+        panic!("Expected doctype");
     }
 
     let pi = &doc.root_nodes()[4];

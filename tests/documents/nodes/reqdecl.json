@@ -1,0 +1,52 @@
+{
+  "standalone_version": null,
+  "version": "1.0",
+  "root_elements": [
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "Element",
+      "value": {
+        "name": "el",
+        "attributes": {},
+        "namespace_decls": {},
+        "children": [],
+        "is_root_element": true
+      }
+    },
+    {
+      "type": "Text",
+      "value": "\nText\n"
+    },
+    {
+      "type": "Comment",
+      "value": " Comment "
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "DocType",
+      "value": "doctype"
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "CData",
+      "value": "<tag>text</tag>"
+    },
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "PI",
+      "value": "xml-stylesheet type=\"text/xsl\""
+    }
+  ]
+}

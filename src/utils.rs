@@ -1,25 +1,5 @@
 #![allow(clippy::wrong_self_convention)]
 pub mod encoding;
-#[cfg(test)]
-pub mod tests {
-    use std::path::PathBuf;
-
-    use tracing::{debug, info};
-    use tracing_subscriber::fmt;
-    use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
-    pub fn setup_logger() {
-        static INIT: std::sync::Once = std::sync::Once::new();
-        INIT.call_once(|| {
-            let stdout_log = fmt::layer().pretty();
-            tracing_subscriber::registry().with(stdout_log).init();
-        });
-        info!("Logger initialized");
-        debug!("Logger initialized");
-    }
-    pub fn test_dir() -> std::path::PathBuf {
-        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests")
-    }
-}
 use core::str;
 use std::ops::Deref;
 
@@ -96,4 +76,28 @@ pub(crate) fn bytes_to_unescaped_string(cow: &[u8]) -> Result<String, EditXMLErr
 
     let unescape = crate::utils::encoding::unescape_with(value, resolve_predefined_entity)?;
     Ok(unescape.into_owned())
+}
+#[cfg(test)]
+pub mod tests {
+    use std::path::PathBuf;
+
+    use std::sync::Once;
+    use tracing::{debug, info};
+    use tracing_subscriber::fmt;
+    use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+    pub fn setup_logger() {
+        static INIT: Once = Once::new();
+        INIT.call_once(|| {
+            let stdout_log = fmt::layer().pretty();
+            tracing_subscriber::registry().with(stdout_log).init();
+        });
+        info!("Logger initialized");
+        debug!("Logger initialized");
+    }
+    pub fn test_dir() -> std::path::PathBuf {
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests")
+    }
+    pub fn documents_dir() -> std::path::PathBuf {
+        test_dir().join("documents")
+    }
 }

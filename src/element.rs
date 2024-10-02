@@ -1,12 +1,16 @@
 use crate::document::{Document, Node};
 use crate::error::{EditXMLError, Result};
 use crate::utils::HashMap;
+#[cfg(feature = "document-breakdown")]
+mod breakdown;
+#[cfg(feature = "document-breakdown")]
+pub use breakdown::*;
 mod builder;
 mod debug;
 pub use builder::ElementBuilder;
 pub use debug::ElementDebug;
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub(crate) struct ElementData {
     full_name: String,
     attributes: HashMap<String, String>, // q:attr="val" => {"q:attr": "val"}
@@ -48,7 +52,7 @@ pub(crate) struct ElementData {
 ///     .collect();
 /// ```
 ///
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Element {
     id: usize,
 }
@@ -107,8 +111,7 @@ impl Element {
             full_name,
             attributes,
             namespace_decls,
-            parent: None,
-            children: vec![],
+            ..Default::default()
         };
         doc.store.push(elem_data);
         doc.counter += 1;
@@ -117,13 +120,7 @@ impl Element {
 
     /// Create a container Element
     pub(crate) fn container() -> (Element, ElementData) {
-        let elem_data = ElementData {
-            full_name: String::new(),
-            attributes: HashMap::default(),
-            namespace_decls: HashMap::default(),
-            parent: None,
-            children: Vec::new(),
-        };
+        let elem_data = ElementData::default();
         let elem = Element { id: 0 };
         (elem, elem_data)
     }
@@ -136,8 +133,9 @@ impl Element {
     }
 
     /// Equivalent to `Node::Element(self)`
+    #[deprecated(note = "Use Into<Node> instead. This method will be removed in future versions.")]
     pub fn as_node(&self) -> Node {
-        Node::Element(*self)
+        self.into()
     }
 
     /// Separate full_name by `:`, returning (prefix, name).
@@ -362,6 +360,7 @@ impl Element {
     }
 
     /// `self.parent(doc).is_some()`
+    #[inline]
     pub fn has_parent(&self, doc: &Document) -> bool {
         self.parent(doc).is_some()
     }
@@ -370,28 +369,56 @@ impl Element {
     pub fn children<'a>(&self, doc: &'a Document) -> &'a Vec<Node> {
         &self.data(doc).children
     }
-
-    fn _children_recursive<'a>(&self, doc: &'a Document, nodes: &mut Vec<&'a Node>) {
-        for node in self.children(doc) {
+    /// Pushes all child nodes to `nodes`.
+    ///
+    /// This is used to recursively get all children of an element.
+    pub fn push_children_recursive<'a>(&self, doc: &'a Document, nodes: &mut Vec<&'a Node>) {
+        let children = self.children(doc);
+        nodes.reserve(children.len());
+        for node in children {
             nodes.push(node);
             if let Node::Element(elem) = &node {
-                elem._children_recursive(doc, nodes);
+                elem.push_children_recursive(doc, nodes);
             }
         }
     }
 
     /// Get all child nodes recursively. (i.e. includes its children's children.)
+    #[inline]
     pub fn children_recursive<'a>(&self, doc: &'a Document) -> Vec<&'a Node> {
         let mut nodes = Vec::new();
-        self._children_recursive(doc, &mut nodes);
+        self.push_children_recursive(doc, &mut nodes);
         nodes
     }
 
     /// `!self.children(doc).is_empty()`
+    #[inline]
     pub fn has_children(&self, doc: &Document) -> bool {
         !self.children(doc).is_empty()
     }
-
+    /// Returns true if this element has children that are not empty text nodes.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use edit_xml::{Document, Element};
+    /// let xml = r#"<?xml version="1.0"?>
+    /// <root>
+    ///    <empty></empty>
+    ///    <text>Hello</text>
+    /// </root>"#;
+    /// let doc = Document::parse_str(xml).unwrap();
+    /// let root = doc.root_element().unwrap();
+    /// let empty = root.find(&doc, "empty").unwrap();
+    /// let text = root.find(&doc, "text").unwrap();
+    /// assert!(!empty.has_children_ignore_whitespace(&doc));
+    /// assert!(text.has_children_ignore_whitespace(&doc));
+    /// ```
+    pub fn has_children_ignore_whitespace(&self, doc: &Document) -> bool {
+        self.children(doc)
+            .iter()
+            .any(|n| !n.is_text() || !n.text_content(doc).trim().is_empty())
+    }
     /// Get only child [`Element`]s of this element.
     ///
     /// This calls `.children().iter().filter_map().collect()`.
@@ -665,7 +692,7 @@ mod tests {
         let doc = Document::parse_str(xml).unwrap();
         let container = doc.container().children(&doc)[0].as_element().unwrap();
         let child_elements = container.child_elements(&doc);
-        let foo = *child_elements.get(0).unwrap();
+        let foo = *child_elements.first().unwrap();
         let bar = *child_elements.get(1).unwrap();
         let c = bar.child_elements(&doc)[0];
         assert_eq!(c.prefix_name(&doc), ("", "c"));

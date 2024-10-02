@@ -20,9 +20,15 @@ thiserror = "1"
 tracing = "0.1"
 ahash = { version = "0.8", optional = true }
 memchr = "2"
+
+serde = { version = "1.0", optional = true }
+
 [features]
 default = ["ahash"]
 escape-html = ["quick-xml/escape-html"]
+# Document Breakdown is a feature that allows a user to breakdown a document into a serialized structure.
+# This is used mainly for testing purposes.
+document-breakdown = ["serde", "ahash?/serde"]
 soft-fail-unescape = []
 [dev-dependencies]
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
@@ -32,12 +38,14 @@ anyhow = "1"
 minidom = "0.16"
 roxmltree = "0.20"
 xmltree = "0.11"
-xml_dom = "0.2"                                                     # avoid quick-xml version conflict
+xml_dom = "0.2"
 # parsers
 xml5ever = "0.20"
 markup5ever = "0.14"
 xml_rs = { version = "0.8", package = "xml-rs" }
 
+edit-xml = { path = ".", features = ["document-breakdown"] }
+serde_json = "1.0"
 criterion = "0.5"
 
 [[bench]]

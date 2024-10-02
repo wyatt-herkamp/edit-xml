@@ -1,0 +1,144 @@
+{
+  "standalone_version": null,
+  "version": "1.0",
+  "root_elements": [
+    {
+      "type": "Text",
+      "value": "\n"
+    },
+    {
+      "type": "Element",
+      "value": {
+        "name": "root",
+        "attributes": {
+          "attr": "value",
+          "attr2": "hey"
+        },
+        "namespace_decls": {},
+        "children": [
+          {
+            "type": "Text",
+            "value": "\n  "
+          },
+          {
+            "type": "Element",
+            "value": {
+              "name": "self-closing",
+              "attributes": {},
+              "namespace_decls": {},
+              "children": [],
+              "is_root_element": false
+            }
+          },
+          {
+            "type": "Text",
+            "value": "\n  Text\n  "
+          },
+          {
+            "type": "Element",
+            "value": {
+              "name": "b",
+              "attributes": {},
+              "namespace_decls": {},
+              "children": [
+                {
+                  "type": "Text",
+                  "value": "Hello World!"
+                }
+              ],
+              "is_root_element": false
+            }
+          },
+          {
+            "type": "Text",
+            "value": "\n  "
+          },
+          {
+            "type": "Element",
+            "value": {
+              "name": "items",
+              "attributes": {
+                "id": "items"
+              },
+              "namespace_decls": {
+                "": "def ns",
+                "ns": "a namespace"
+              },
+              "children": [
+                {
+                  "type": "Text",
+                  "value": "\n    "
+                },
+                {
+                  "type": "Element",
+                  "value": {
+                    "name": "item",
+                    "attributes": {},
+                    "namespace_decls": {},
+                    "children": [
+                      {
+                        "type": "Text",
+                        "value": "한국어"
+                      }
+                    ],
+                    "is_root_element": false
+                  }
+                },
+                {
+                  "type": "Text",
+                  "value": "\n    "
+                },
+                {
+                  "type": "Element",
+                  "value": {
+                    "name": "item",
+                    "attributes": {
+                      "ns:attr": "val"
+                    },
+                    "namespace_decls": {},
+                    "children": [
+                      {
+                        "type": "Text",
+                        "value": "日本語"
+                      }
+                    ],
+                    "is_root_element": false
+                  }
+                },
+                {
+                  "type": "Text",
+                  "value": "\n    "
+                },
+                {
+                  "type": "Element",
+                  "value": {
+                    "name": "item",
+                    "attributes": {},
+                    "namespace_decls": {},
+                    "children": [
+                      {
+                        "type": "Text",
+                        "value": ""
+                      }
+                    ],
+                    "is_root_element": false
+                  }
+                },
+                {
+                  "type": "Text",
+                  "value": "\n  "
+                }
+              ],
+              "is_root_element": false
+            }
+          },
+          {
+            "type": "Text",
+            "value": "\n"
+          }
+        ],
+        "is_root_element": true
+      }
+    }
+  ]
+}
