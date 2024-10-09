@@ -54,7 +54,7 @@ pub(crate) struct ElementData {
 ///
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Element {
-    id: usize,
+    pub(crate) id: usize,
 }
 
 impl Element {
@@ -99,25 +99,32 @@ impl Element {
     pub fn build<S: Into<String>>(name: S) -> ElementBuilder {
         ElementBuilder::new(name.into())
     }
-
+    #[inline(always)]
     pub(crate) fn with_data(
         doc: &mut Document,
         full_name: String,
         attributes: HashMap<String, String>,
         namespace_decls: HashMap<String, String>,
     ) -> Element {
-        let elem = Element { id: doc.counter };
+        Self::with_data_and_children_size(doc, full_name, attributes, namespace_decls, 1)
+    }
+    #[inline(always)]
+    pub(crate) fn with_data_and_children_size(
+        doc: &mut Document,
+        full_name: String,
+        attributes: HashMap<String, String>,
+        namespace_decls: HashMap<String, String>,
+        children_size: usize,
+    ) -> Element {
         let elem_data = ElementData {
             full_name,
             attributes,
             namespace_decls,
-            ..Default::default()
+            children: Vec::with_capacity(children_size),
+            parent: None,
         };
-        doc.store.push(elem_data);
-        doc.counter += 1;
-        elem
+        doc.push_to_store(elem_data)
     }
-
     /// Create a container Element
     pub(crate) fn container() -> (Element, ElementData) {
         let elem_data = ElementData::default();

@@ -78,6 +78,7 @@ impl From<std::io::Error> for EditXMLError {
         EditXMLError::Io(Arc::new(err))
     }
 }
+
 #[derive(Debug, Error)]
 pub enum DecodeError {
     #[error("Cannot decode String from UTF-8 {0}")]

@@ -52,22 +52,8 @@ To run benchmark: `cargo bench`.
 
 ```
                    tiny(5KB) medium(1.5MB) large(25MB) medium(UTF-16)
-xml-doc v0.2.0:     81.02us     31.08ms      355.04ms      33.33ms
+edit-xml v0.1.0:    81.02us     31.08ms      355.04ms      33.33ms
 minidom v0.12.0:    94.93us     43.39ms      610.41ms
 roxmltree v0.14.1:  52.73us     17.23ms      353.79ms
 xmltree v0.10.3:  4305.7 us   1355.0 ms    22769.  ms
-```
-
-Only roxmltree which doesn't support writing, is considerably faster than xml_doc. [(Benchmark results)](https://github.com/BlueGreenMagick/xml-doc/runs/4106349292).
-
-### Event-based parser
-
-This crate uses [quick-xml] to parse/write xml, which seems to be the fastest xml event parser. [(Benchmark results)](https://github.com/BlueGreenMagick/xml-doc/runs/4106349292).
-
-```
-                   tiny(5KB) medium(1.5MB) large(25MB)
-quick-xml v0.17.2:  21.11us     6.63ms       97.79ms
-xml-rs v0.8.4:     343.56us    96.17ms     1671.8 ms
-xml5ever v0.16.2:  127.83us    42.46ms      550.83ms
-RustyXML v0.3.0:   103.07us    36.40ms      710.93ms
 ```

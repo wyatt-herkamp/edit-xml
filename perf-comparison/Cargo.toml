@@ -1,0 +1,43 @@
+[package]
+name = "xml_lib_perf_comparison"
+version = "0.1.0"
+edition = "2021"
+[lib]
+
+[[bin]]
+name = "keep_reading"
+path = "src/keep_reading.rs"
+
+[dependencies]
+clap = { version = "4", features = ["derive"] }
+
+
+anyhow = "1"
+# parsers
+xml5ever = "0.20"
+markup5ever = "0.14"
+xml_rs = { version = "0.8", package = "xml-rs" }
+quick-xml = "0.36"
+
+# Event Based
+edit-xml = { path = "../", features = ["document-breakdown"] }
+xml_dom = "0.2"
+minidom = "0.16"
+roxmltree = "0.20"
+xmltree = "0.11"
+criterion = { version = "0.5", features = ["html_reports", "csv_output"] }
+
+[[bench]]
+name = "dom_based"
+path = "benches/dom_based.rs"
+harness = false
+
+[[bench]]
+name = "event_based"
+path = "benches/event_based.rs"
+harness = false
+
+[[bench]]
+name = "compare"
+path = "benches/compare.rs"
+harness = false

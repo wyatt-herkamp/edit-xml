@@ -1,8 +1,9 @@
-use bench_utils::{bench, LARGE_XML, MEDIUM_XML, TINY_XML};
-use criterion::{criterion_group, criterion_main, Criterion};
+#![allow(dead_code)]
+
+use criterion::{criterion_group, criterion_main};
 use std::fs::File;
 use std::path::Path;
-mod bench_utils;
+use xml_lib_perf_comparison::{bench, LARGE_XML, MEDIUM_XML, TINY_XML};
 
 mod xml_rs_bench {
     use super::*;

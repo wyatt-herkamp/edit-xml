@@ -73,7 +73,22 @@ impl Document {
     pub fn new() -> Document {
         Document::default()
     }
-
+    pub fn new_with_store_size(size: usize) -> Document {
+        let (container, container_data) = Element::container();
+        let mut store = Vec::with_capacity(size + 1);
+        store.push(container_data);
+        Document {
+            counter: 1, // because container is id 0
+            store,
+            container,
+            version: String::from("1.0"),
+            standalone: None,
+        }
+    }
+    /// Get the number of elements in the document.
+    pub fn number_of_elements(&self) -> usize {
+        self.store.len()
+    }
     /// Create a new xml document with a root element.
     ///
     /// # Examples
@@ -140,6 +155,13 @@ impl Document {
         let node = node.into();
         let elem = self.container;
         elem.push_child(self, node)
+    }
+    #[inline(always)]
+    pub(crate) fn push_to_store(&mut self, data: ElementData) -> Element {
+        let elem = Element { id: self.counter };
+        self.counter += 1;
+        self.store.push(data);
+        elem
     }
 }
 

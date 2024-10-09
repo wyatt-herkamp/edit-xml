@@ -2,13 +2,12 @@ use crate::document::{Document, Node};
 use crate::element::Element;
 use crate::error::{DecodeError, EditXMLError, MalformedReason, Result};
 use crate::types::StandaloneValue;
-use crate::utils::HashMap;
+use crate::utils::{attributes, bytes_owned_to_unescaped_string, HashMap};
 use crate::utils::{bytes_to_unescaped_string, XMLStringUtils};
 use encoding_rs::Decoder;
 use encoding_rs::{Encoding, UTF_16BE, UTF_16LE, UTF_8};
 use quick_xml::events::{BytesDecl, BytesStart, Event};
 use quick_xml::Reader;
-use std::borrow::Cow;
 use std::io::{BufRead, Read};
 use tracing::{debug, trace};
 
@@ -115,7 +114,27 @@ impl<R: Read> BufRead for DecodeReader<R> {
         }
     }
 }
-
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct ReadOptionsOptimizations {
+    pub reader_stack_initial_capacity: usize,
+    pub document_initial_capacity: usize,
+    pub attribute_initial_capacity: usize,
+    pub namespace_initial_capacity: usize,
+    pub children_initial_capacity: usize,
+    pub parse_content_buffer_initial_capacity: usize,
+}
+impl Default for ReadOptionsOptimizations {
+    fn default() -> Self {
+        ReadOptionsOptimizations {
+            reader_stack_initial_capacity: 10,
+            document_initial_capacity: 100,
+            attribute_initial_capacity: 20,
+            namespace_initial_capacity: 20,
+            children_initial_capacity: 1,
+            parse_content_buffer_initial_capacity: 512,
+        }
+    }
+}
 /// Options when parsing xml.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ReadOptions {
@@ -138,6 +157,10 @@ pub struct ReadOptions {
     /// See [`encoding_rs::Encoding::for_label`] for valid values.
     /// Default: `None`
     pub encoding: Option<String>,
+
+    pub normalize_attribute_value_space: bool,
+
+    pub optimizations: ReadOptionsOptimizations,
 }
 impl ReadOptions {
     /// New ReadOptions that is relaxed by not requiring XML declaration.
@@ -148,6 +171,8 @@ impl ReadOptions {
             ignore_whitespace_only: true,
             require_decl: false,
             encoding: None,
+            normalize_attribute_value_space: false,
+            optimizations: ReadOptionsOptimizations::default(),
         }
     }
 }
@@ -159,6 +184,8 @@ impl Default for ReadOptions {
             ignore_whitespace_only: false,
             require_decl: true,
             encoding: None,
+            normalize_attribute_value_space: false,
+            optimizations: ReadOptionsOptimizations::default(),
         }
     }
 }
@@ -173,8 +200,10 @@ pub(crate) struct DocumentParser {
 
 impl DocumentParser {
     pub(crate) fn parse_reader<R: Read>(reader: R, opts: ReadOptions) -> Result<Document> {
-        let doc = Document::new();
-        let element_stack = vec![doc.container()];
+        let doc = Document::new_with_store_size(opts.optimizations.document_initial_capacity);
+        let mut element_stack =
+            Vec::with_capacity(opts.optimizations.reader_stack_initial_capacity);
+        element_stack.push(Element::container().0);
         let mut parser = DocumentParser {
             doc,
             read_opts: opts,
@@ -207,25 +236,44 @@ impl DocumentParser {
         };
         Ok(())
     }
+    #[inline(always)]
+    fn element_attributes(
+        &self,
+        ev: &BytesStart,
+    ) -> Result<(HashMap<String, String>, HashMap<String, String>)> {
+        let mut attributes =
+            HashMap::with_capacity(self.read_opts.optimizations.attribute_initial_capacity);
+        let mut namespace_decls =
+            HashMap::with_capacity(self.read_opts.optimizations.namespace_initial_capacity);
 
+        for attr in ev.attributes() {
+            let attr = attr?;
+            // Key is converted to string.
+            let (key, prefix) = attr.key.decompose();
+            let value = if self.read_opts.normalize_attribute_value_space {
+                let value = normalize_space(&attr.value);
+                bytes_owned_to_unescaped_string(value)?
+            } else {
+                bytes_to_unescaped_string(&attr.value)?
+            };
+
+            if prefix.map(attributes::is_xlmns).unwrap_or(false) {
+                // Has a prefix of `xmlns` so it is going in
+                let key = key.into_string()?;
+                namespace_decls.insert(key, value);
+            } else if attributes::is_xlmns(key) {
+                // The attribute is just `xmlns` meaning it is empty string
+                namespace_decls.insert(String::default(), value);
+            } else {
+                attributes.insert(key.into_string()?, value);
+            }
+        }
+        Ok((attributes, namespace_decls))
+    }
+    /// Create a new element and push it to the parent element.
     fn create_element(&mut self, parent: Element, ev: &BytesStart) -> Result<Element> {
         let full_name = ev.name().into_string()?;
-        let mut namespace_decls = HashMap::new();
-        let mut attributes = HashMap::new();
-        for attr in ev.attributes() {
-            let mut attr = attr?;
-            attr.value = Cow::Owned(normalize_space(&attr.value));
-            let key = attr.key.into_string()?;
-            let value = bytes_to_unescaped_string(&attr.value)?;
-            if key == "xmlns" {
-                namespace_decls.insert(String::new(), value);
-                continue;
-            } else if let Some(prefix) = key.strip_prefix("xmlns:") {
-                namespace_decls.insert(prefix.to_owned(), value);
-                continue;
-            }
-            attributes.insert(key, value);
-        }
+        let (attributes, namespace_decls) = self.element_attributes(ev)?;
         let elem = Element::with_data(&mut self.doc, full_name, attributes, namespace_decls);
         parent
             .push_child(&mut self.doc, Node::Element(elem))
@@ -247,7 +295,8 @@ impl DocumentParser {
             Event::End(_) => {
                 let elem = self.element_stack.pop().ok_or_else(|| {
                     EditXMLError::MalformedXML(MalformedReason::GenericMalformedTree)
-                })?; // quick-xml checks if tag names match for us
+                })?;
+                // quick-xml checks if tag names match for us
                 if self.read_opts.empty_text_node {
                     // distinguish <tag></tag> and <tag />
                     if !elem.has_children(&self.doc) {
@@ -417,7 +466,11 @@ impl DocumentParser {
     }
 
     fn parse_content<B: BufRead>(&mut self, mut reader: Reader<B>) -> Result<()> {
-        let mut buf = Vec::with_capacity(200); // reduce time increasing capacity at start.
+        let mut buf = Vec::with_capacity(
+            self.read_opts
+                .optimizations
+                .parse_content_buffer_initial_capacity,
+        ); // reduce time increasing capacity at start.
 
         loop {
             let ev = reader.read_event_into(&mut buf)?;
@@ -436,6 +489,7 @@ impl DocumentParser {
 
 /// Returns true if byte is an XML whitespace character
 #[allow(clippy::match_like_matches_macro)]
+#[inline(always)]
 fn is_whitespace(byte: u8) -> bool {
     match byte {
         b'\r' | b'\n' | b'\t' | b' ' => true,

@@ -7,13 +7,16 @@ env:
 
 jobs:
   benchmark:
-
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
-      
-    - name: Benchmark
-      run: |
-        cd benches
-        cargo bench
+      - uses: actions/checkout@v4
+
+      - name: Benchmark
+        run: |
+          cd perf-comparison
+          cargo bench
+      - uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results
+          path: target/criterion

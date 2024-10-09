@@ -1,3 +1,6 @@
+[workspace]
+members = ["perf-comparison"]
+
 [package]
 name = "edit-xml"
 version = "0.1.0"
@@ -22,7 +25,6 @@ ahash = { version = "0.8", optional = true }
 memchr = "2"
 
 serde = { version = "1.0", features = ["derive"], optional = true }
-
 [features]
 default = ["ahash"]
 escape-html = ["quick-xml/escape-html"]
@@ -35,29 +37,15 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 tracing-appender = "0.2"
 itertools = "0.13"
 anyhow = "1"
-minidom = "0.16"
-roxmltree = "0.20"
-xmltree = "0.11"
-xml_dom = "0.2"
-# parsers
-xml5ever = "0.20"
-markup5ever = "0.14"
-xml_rs = { version = "0.8", package = "xml-rs" }
-
 edit-xml = { path = ".", features = ["document-breakdown"] }
-serde_json = "1.0"
 criterion = "0.5"
-
-[[bench]]
-name = "dom_based"
-path = "benches/dom_based.rs"
-harness = false
-[[bench]]
-name = "event_based"
-path = "benches/event_based.rs"
-harness = false
+serde_json = "1.0"
 
 [[bench]]
 name = "library_benches"
-path = "benches/library_benches.rs"
+path = "benches/benches.rs"
 harness = false
+
+
+[profile.release]
+debug = true
