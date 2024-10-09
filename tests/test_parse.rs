@@ -10,7 +10,14 @@ fn test_normalize_attr() {
 
  ab&#xD;   c
   \" />";
-    let doc = Document::parse_str(xml).unwrap();
+    let doc = Document::parse_str_with_opts(
+        xml,
+        ReadOptions {
+            normalize_attribute_value_space: true,
+            ..Default::default()
+        },
+    )
+    .unwrap();
     let root = doc.root_element().unwrap();
     let val = root.attribute(&doc, "attr").unwrap();
 

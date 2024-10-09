@@ -265,7 +265,8 @@ impl DocumentParser {
                 // The attribute is just `xmlns` meaning it is empty string
                 namespace_decls.insert(String::default(), value);
             } else {
-                attributes.insert(key.into_string()?, value);
+                let key = attr.key.into_string()?;
+                attributes.insert(key, value);
             }
         }
         Ok((attributes, namespace_decls))

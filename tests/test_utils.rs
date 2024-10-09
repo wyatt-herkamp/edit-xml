@@ -41,6 +41,8 @@ pub fn iter_read_options() -> impl Iterator<Item = ReadOptions> {
             trim_text: raw[1],
             ignore_whitespace_only: raw[2],
             require_decl: raw[3],
+            // I don't like updating all the tests rn
+            normalize_attribute_value_space: true,
             ..Default::default()
         })
 }

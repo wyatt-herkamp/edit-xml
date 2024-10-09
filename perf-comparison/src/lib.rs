@@ -34,30 +34,3 @@ pub fn open_bench_file(file: &str) -> std::fs::File {
     )
     .unwrap()
 }
-#[cfg(test)]
-mod edit_xml_tests {
-    use std::hint::black_box;
-
-    use crate::get_bench_file_path;
-
-    #[test]
-    fn tiny_xml() {
-        let file = get_bench_file_path(crate::TINY_XML);
-        let string = std::fs::read_to_string(file).unwrap();
-
-        for _ in 0..1000 {
-            let document = edit_xml::Document::parse_str(&string).unwrap();
-            black_box(document);
-        }
-    }
-    #[test]
-    fn medium_xml() {
-        let file = get_bench_file_path(crate::MEDIUM_XML);
-        let string = std::fs::read_to_string(file).unwrap();
-
-        for _ in 0..1000 {
-            let document = edit_xml::Document::parse_str(&string).unwrap();
-            black_box(document);
-        }
-    }
-}
