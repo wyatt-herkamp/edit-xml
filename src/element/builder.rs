@@ -49,7 +49,7 @@ impl NewNodes {
 ///     .attribute("id", "main")
 ///     .attribute("class", "main")
 ///     .finish(&mut doc);
-/// doc.push_root_node(root.as_node());
+/// doc.push_root_node(root);
 ///
 /// let name = Element::build("name")
 ///     .add_text("No Name")
@@ -227,7 +227,7 @@ impl ElementBuilder {
     /// let root = ElementBuilder::new("root")
     ///   .add_text("Hello")
     ///   .finish(&mut doc);
-    /// doc.push_root_node(root.as_node());
+    /// doc.push_root_node(root);
     /// ```
     #[must_use]
     pub fn finish(self, doc: &mut Document) -> Element {

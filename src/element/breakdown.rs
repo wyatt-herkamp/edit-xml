@@ -1,5 +1,4 @@
 use serde::{Deserialize, Serialize};
-use tracing::instrument;
 
 use crate::utils::HashMap;
 
@@ -14,13 +13,13 @@ impl Element {
     /// All the data is cloned. This is not a memory efficient or fast way to access the data.
     /// # Note
     /// The data structure is not stable and may change in the future.
-    #[instrument]
+    #[cfg_attr(feature = "tracing", tracing::instrument)]
     pub fn breakdown(&self, doc: &Document) -> ElementBreakdown {
         ElementBreakdown::new(*self, doc)
     }
 }
 /// Loops through all the children of an element and creates a breakdown of each child.
-#[instrument]
+#[cfg_attr(feature = "tracing", tracing::instrument)]
 fn get_children(element: Element, doc: &Document) -> Vec<NodeBreakdown> {
     element
         .children(doc)
@@ -48,7 +47,7 @@ pub struct ElementBreakdown {
     // TODO: Can we just use a reference to the document? and manually implement Serialize/Deserialize?
 }
 impl ElementBreakdown {
-    #[instrument]
+    #[cfg_attr(feature = "tracing", tracing::instrument)]
     pub fn new(element: Element, doc: &Document) -> Self {
         let name = element.name(doc).to_owned();
         let attributes = element.attributes(doc).clone();

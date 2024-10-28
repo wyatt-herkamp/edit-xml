@@ -8,7 +8,6 @@ use quick_xml::{
     events::{BytesPI, BytesText},
     name::{LocalName, QName},
 };
-use tracing::debug;
 
 use crate::EditXMLError;
 #[cfg(not(feature = "ahash"))]
@@ -25,10 +24,12 @@ pub trait XMLStringUtils {
     /// Unescapes the content of the type into a string
     fn unescape_to_string(&self) -> Result<String, EditXMLError> {
         let value = self.into_string()?;
-        debug!("Unescaping: {}", value);
+        #[cfg(feature = "tracing")]
+        tracing::debug!("Unescaping: {}", value);
         let unescape =
             crate::utils::encoding::unescape_with(value.as_str(), resolve_predefined_entity)?;
-        debug!("Unescaped: {}", unescape);
+        #[cfg(feature = "tracing")]
+        tracing::debug!("Unescaped: {}", unescape);
         Ok(unescape.into_owned())
     }
 }

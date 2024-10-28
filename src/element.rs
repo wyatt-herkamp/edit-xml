@@ -94,7 +94,7 @@ impl Element {
     ///     .attribute("class", "main")
     ///     .finish(&mut doc);
     ///
-    /// doc.push_root_node(elem.as_node());
+    /// doc.push_root_node(elem);
     /// ```
     pub fn build<S: Into<String>>(name: S) -> ElementBuilder {
         ElementBuilder::new(name.into())

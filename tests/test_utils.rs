@@ -154,7 +154,10 @@ pub mod document_validation {
             Ok(result)
         }
     }
-
+    #[allow(
+        clippy::large_enum_variant,
+        reason = "This is for testing. Size is not a concern"
+    )]
     pub enum BreakdownComparisonResult {
         Match,
         MismatchedSize {

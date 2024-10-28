@@ -11,15 +11,15 @@
 //! ```
 //! use edit_xml::{Document, Element, Node};
 //!
-//! const data: &'static str = r#"<?xml version="1.0" encoding="utf-8"?>
-//! <metadata>     
+//! const DATA: &'static str = r#"<?xml version="1.0" encoding="utf-8"?>
+//! <metadata>
 //!     <title>The Felloship of the Ring</title>
 //!     <author>J. R. R. Tolkien</author>
 //!     <date>1954</date>
 //! </metadata>
 //! "#;
 //!
-//! let mut doc = Document::parse_str(data).unwrap();
+//! let mut doc = Document::parse_str(DATA).unwrap();
 //! let metadata = doc.root_element().unwrap();
 //!
 //! // Add a new element

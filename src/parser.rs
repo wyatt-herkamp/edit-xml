@@ -9,7 +9,6 @@ use encoding_rs::{Encoding, UTF_16BE, UTF_16LE, UTF_8};
 use quick_xml::events::{BytesDecl, BytesStart, Event};
 use quick_xml::Reader;
 use std::io::{BufRead, Read};
-use tracing::{debug, trace};
 
 pub(crate) struct DecodeReader<R: Read> {
     decoder: Option<Decoder>,
@@ -414,14 +413,16 @@ impl DocumentParser {
 
     // Look at the document decl and figure out the document encoding
     fn parse_start<R: Read>(&mut self, reader: R) -> Result<()> {
-        debug!(?self.read_opts, "Parsing Start");
+        #[cfg(feature = "tracing")]
+        tracing::debug!(?self.read_opts, "Parsing Start");
         let mut decodereader = DecodeReader::new(reader, None);
         let mut init_encoding = self.sniff_encoding(&mut decodereader)?;
         if let Some(enc) = &self.read_opts.encoding {
             init_encoding =
                 Some(Encoding::for_label(enc.as_bytes()).ok_or(DecodeError::MissingEncoding)?)
         }
-        debug!(?init_encoding, "Initial Encoding");
+        #[cfg(feature = "tracing")]
+        tracing::debug!(?init_encoding, "Initial Encoding");
         decodereader.set_encoding(init_encoding);
         let mut xmlreader = Reader::from_reader(decodereader);
         xmlreader.config_mut().trim_text(self.read_opts.trim_text);
@@ -432,19 +433,24 @@ impl DocumentParser {
         let event = match xmlreader.read_event_into(&mut buf)? {
             Event::Text(ev) => {
                 if ev.len() == 0 {
-                    trace!("Skipping empty text event");
+                    #[cfg(feature = "tracing")]
+                    tracing::trace!("Skipping empty text event");
                     xmlreader.read_event_into(&mut buf)?
                 } else if self.read_opts.ignore_whitespace_only && only_has_whitespace(&ev) {
-                    trace!("Skipping whitespace only text event");
+                    #[cfg(feature = "tracing")]
+                    tracing::trace!("Skipping whitespace only text event");
                     xmlreader.read_event_into(&mut buf)?
                 } else {
-                    trace!("First Event is Text");
+                    #[cfg(feature = "tracing")]
+
+                    tracing::trace!("First Event is Text");
                     Event::Text(ev)
                 }
             }
             ev => ev,
         };
-        debug!(?event, "First Event");
+        #[cfg(feature = "tracing")]
+        tracing::debug!(?event, "First Event");
         if let Event::Decl(ev) = event {
             self.handle_decl(&ev)?;
             // Encoding::for_label("UTF-16") defaults to UTF-16 LE, even though it could be UTF-16 BE
@@ -457,7 +463,8 @@ impl DocumentParser {
                 xmlreader.config_mut().trim_text(self.read_opts.trim_text);
             }
         } else if self.read_opts.require_decl {
-            debug!(?self.read_opts, ?event, "XML Declaration is required");
+            #[cfg(feature = "tracing")]
+            tracing::debug!(?self.read_opts, ?event, "XML Declaration is required");
             return Err(MalformedReason::MissingDeclaration.into());
         } else if self.handle_event(event)? {
             return Ok(());

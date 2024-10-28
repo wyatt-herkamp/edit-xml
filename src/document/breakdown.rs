@@ -1,5 +1,4 @@
 use serde::{Deserialize, Serialize};
-use tracing::instrument;
 
 use crate::{types::StandaloneValue, Document};
 
@@ -12,7 +11,7 @@ pub struct DocumentBreakdown {
 }
 
 impl Document {
-    #[instrument]
+    #[cfg_attr(feature = "tracing", tracing::instrument)]
     pub fn breakdown(&self) -> DocumentBreakdown {
         let root_nodes = self.root_nodes();
         let mut root_elements = Vec::with_capacity(root_nodes.len());

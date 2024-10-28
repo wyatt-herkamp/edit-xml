@@ -3,7 +3,6 @@ use std::{borrow::Cow, fmt::Debug};
 mod breakdown;
 #[cfg(feature = "document-breakdown")]
 pub use breakdown::*;
-use tracing::instrument;
 
 use crate::{element::ElementDebug, Document, Element};
 
@@ -75,7 +74,7 @@ impl Node {
             _ => None,
         }
     }
-    #[instrument]
+    #[cfg_attr(feature = "tracing", tracing::instrument)]
     pub(crate) fn build_text_content<'a>(&self, doc: &'a Document, buf: &'a mut String) {
         match self {
             Node::Element(elem) => elem.build_text_content(doc, buf),

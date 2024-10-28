@@ -26,9 +26,10 @@ fn parse_number(num: &str) -> Result<char, ParseCharRefError> {
     }
 }
 /// Will unescape the given string and ignore any unknown entities
-pub fn unescape_with_and_ignore<'input, 'entity, F>(
+pub fn unescape_with_maybe_ignore<'input, 'entity, F>(
     raw: &'input str,
     mut resolve_entity: F,
+    ignore_unknown: bool,
 ) -> Result<Cow<'input, str>, EscapeError>
 where
     // the lifetime of the output comes from a capture or is `'static`
@@ -56,8 +57,16 @@ where
                 } else if let Some(value) = resolve_entity(pat) {
                     unescaped.push_str(value);
                 } else {
+                    #[cfg(feature = "tracing")]
                     tracing::warn!("Unknown entity: {:?}", pat);
-                    unescaped.push_str(&raw[start..=end]);
+                    if ignore_unknown {
+                        unescaped.push_str(&raw[start..=end]);
+                    } else {
+                        return Err(EscapeError::UnrecognizedEntity(
+                            start + 1..end,
+                            pat.to_string(),
+                        ));
+                    }
                 }
 
                 last_end = end + 1;
@@ -85,11 +94,11 @@ where
 {
     #[cfg(feature = "soft-fail-unescape")]
     {
-        unescape_with_and_ignore(raw, resolve_entity)
+        unescape_with_maybe_ignore(raw, resolve_entity, true)
     }
     #[cfg(not(feature = "soft-fail-unescape"))]
     {
-        quick_xml::escape::unescape_with(raw, resolve_entity)
+        unescape_with_maybe_ignore(raw, resolve_entity, false)
     }
 }
 
