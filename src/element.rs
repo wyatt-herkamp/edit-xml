@@ -7,6 +7,7 @@ mod breakdown;
 pub use breakdown::*;
 mod builder;
 mod debug;
+mod sort;
 pub use builder::ElementBuilder;
 pub use debug::ElementDebug;
 
