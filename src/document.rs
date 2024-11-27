@@ -289,7 +289,7 @@ impl Document {
         Ok(())
     }
 
-    fn write_element(&self, writer: &mut Writer<impl Write>, element: Element) -> Result<()> {
+    pub fn write_element(&self, writer: &mut Writer<impl Write>, element: Element) -> Result<()> {
         let name_bytes = element.full_name(self);
         let mut start = BytesStart::new(name_bytes);
         for (key, val) in element.attributes(self) {
