@@ -36,7 +36,7 @@ soft-fail-unescape = []
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 tracing-appender = "0.2"
 tracing = "0.1"
-itertools = "0.13"
+itertools = "0.14"
 anyhow = "1"
 edit-xml = { path = ".", features = ["document-breakdown", "tracing"] }
 criterion = "0.5"
