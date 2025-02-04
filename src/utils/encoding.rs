@@ -26,6 +26,10 @@ fn parse_number(num: &str) -> Result<char, ParseCharRefError> {
     }
 }
 /// Will unescape the given string and ignore any unknown entities
+#[cfg_attr(
+    feature = "tracing",
+    tracing::instrument(level = "trace", skip(resolve_entity))
+)]
 pub fn unescape_with_maybe_ignore<'input, 'entity, F>(
     raw: &'input str,
     mut resolve_entity: F,
@@ -58,7 +62,7 @@ where
                     unescaped.push_str(value);
                 } else {
                     #[cfg(feature = "tracing")]
-                    tracing::warn!("Unknown entity: {:?}", pat);
+                    tracing::event!(tracing::Level::WARN, ?pat, "Unknown Entity");
                     if ignore_unknown {
                         unescaped.push_str(&raw[start..=end]);
                     } else {

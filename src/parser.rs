@@ -285,7 +285,7 @@ impl DocumentParser {
     fn handle_event(&mut self, event: Event) -> Result<bool> {
         match event {
             Event::Start(ref ev) => {
-                let parent = *self.element_stack.last().ok_or_else(|| {
+                let parent = *self.element_stack.last().ok_or({
                     EditXMLError::MalformedXML(MalformedReason::GenericMalformedTree)
                 })?;
                 let element = self.create_element(parent, ev)?;
@@ -293,7 +293,7 @@ impl DocumentParser {
                 Ok(false)
             }
             Event::End(_) => {
-                let elem = self.element_stack.pop().ok_or_else(|| {
+                let elem = self.element_stack.pop().ok_or({
                     EditXMLError::MalformedXML(MalformedReason::GenericMalformedTree)
                 })?;
                 // quick-xml checks if tag names match for us
@@ -307,7 +307,7 @@ impl DocumentParser {
                 Ok(false)
             }
             Event::Empty(ref ev) => {
-                let parent = *self.element_stack.last().ok_or_else(|| {
+                let parent = *self.element_stack.last().ok_or({
                     EditXMLError::MalformedXML(MalformedReason::GenericMalformedTree)
                 })?;
                 self.create_element(parent, ev)?;
@@ -326,7 +326,7 @@ impl DocumentParser {
                 // NOTE: Was Unescaped
                 let content = ev.unescape_to_string()?;
                 let node = Node::Text(content);
-                let parent = *self.element_stack.last().ok_or_else(|| {
+                let parent = *self.element_stack.last().ok_or({
                     EditXMLError::MalformedXML(MalformedReason::GenericMalformedTree)
                 })?;
                 parent.push_child(&mut self.doc, node).unwrap();
@@ -341,7 +341,7 @@ impl DocumentParser {
                     String::from_utf8(raw.to_vec())?
                 };
                 let node = Node::DocType(content);
-                let parent = *self.element_stack.last().ok_or_else(|| {
+                let parent = *self.element_stack.last().ok_or({
                     EditXMLError::MalformedXML(MalformedReason::GenericMalformedTree)
                 })?;
                 parent.push_child(&mut self.doc, node).unwrap();
@@ -350,7 +350,7 @@ impl DocumentParser {
             Event::Comment(ev) => {
                 let content = String::from_utf8(ev.escape_ascii().collect())?;
                 let node = Node::Comment(content);
-                let parent = *self.element_stack.last().ok_or_else(|| {
+                let parent = *self.element_stack.last().ok_or({
                     EditXMLError::MalformedXML(MalformedReason::GenericMalformedTree)
                 })?;
                 parent.push_child(&mut self.doc, node).unwrap();
@@ -359,18 +359,18 @@ impl DocumentParser {
             Event::CData(ev) => {
                 let content = String::from_utf8(ev.to_vec())?;
                 let node = Node::CData(content);
-                let parent = *self.element_stack.last().ok_or_else(|| {
-                    EditXMLError::MalformedXML(MalformedReason::GenericMalformedTree)
-                })?;
+                let parent = *self.element_stack.last().ok_or(EditXMLError::MalformedXML(
+                    MalformedReason::GenericMalformedTree,
+                ))?;
                 parent.push_child(&mut self.doc, node).unwrap();
                 Ok(false)
             }
             Event::PI(ev) => {
                 let content = ev.into_string()?;
                 let node = Node::PI(content);
-                let parent = *self.element_stack.last().ok_or_else(|| {
-                    EditXMLError::MalformedXML(MalformedReason::GenericMalformedTree)
-                })?;
+                let parent = *self.element_stack.last().ok_or(EditXMLError::MalformedXML(
+                    MalformedReason::GenericMalformedTree,
+                ))?;
                 parent.push_child(&mut self.doc, node).unwrap();
                 Ok(false)
             }

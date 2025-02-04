@@ -181,7 +181,7 @@ impl Element {
     ///
     /// Note that this crate allows Document to have multiple elements, even though it's not valid xml.
     pub fn is_root(&self, doc: &Document) -> bool {
-        self.parent(doc).map_or(false, |p| p.is_container())
+        self.parent(doc).is_some_and(|p| p.is_container())
     }
 
     /// Get full name of element, including its namespace prefix.

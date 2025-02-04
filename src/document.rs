@@ -37,11 +37,11 @@ pub use node::*;
 /// "#).unwrap();
 /// let author_elem = doc
 ///   .root_element()
-///   .unwrap()
+///   .expect("Root element should exist")
 ///   .find(&doc, "metadata")
-///   .unwrap()
+///   .expect("metadata should exist")
 ///   .find(&doc, "author")
-///   .unwrap();
+///   .expect("author should exist");
 /// author_elem.set_text_content(&mut doc, "Lewis Carroll");
 /// let xml = doc.write_str();
 /// ```
