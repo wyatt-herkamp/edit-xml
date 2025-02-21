@@ -1,6 +1,6 @@
 [workspace]
 members = ["perf-comparison"]
-
+resolver = "3"
 [package]
 name = "edit-xml"
 version = "0.1.0"
@@ -9,7 +9,7 @@ authors = [
     "Yoonchae Lee <bluegreenmagick@gmail.com>",
 ]
 description = "Read, modify and write xml in tree-like structure."
-edition = "2021"
+edition = "2024"
 repository = "https://github.com/wyatt-herkamp/edit-xml"
 license = "MIT OR Apache-2.0"
 keywords = ["xml", "parser", "reader", "writer"]

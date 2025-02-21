@@ -2,7 +2,7 @@
 
 ## VSCode Tips
 
-Due to the size of some of the XML files. This can cause VS Code to crash or freeze.
+Due to the size of some of the XML files. This can cause VSCode to crash or freeze.
 
 To prevent this from happening. Add the following to your project's `settings.json` file:
 
