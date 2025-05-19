@@ -20,7 +20,7 @@ xml_dom = "0.2"
 minidom = "0.16"
 roxmltree = "0.20"
 xmltree = "0.11"
-criterion = { version = "0.5", features = ["html_reports", "csv_output"] }
+criterion = { version = "0.6", features = ["html_reports", "csv_output"] }
 
 [[bench]]
 name = "dom_based"
