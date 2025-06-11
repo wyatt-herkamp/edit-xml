@@ -40,7 +40,7 @@ tracing = "0.1"
 itertools = "0.14"
 anyhow = "1"
 edit-xml = { path = ".", features = ["document-breakdown", "tracing"] }
-criterion = "0.5"
+criterion = "0.6"
 serde_json = "1.0"
 
 [[bench]]

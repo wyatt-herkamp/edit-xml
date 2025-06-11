@@ -5,7 +5,7 @@ mod minidom_bench {
     use minidom::*;
     use std::{fs::File, io::BufReader, path::Path};
 
-    use criterion::black_box;
+    use std::hint::black_box;
     use xml_lib_perf_comparison::{bench, LARGE_XML, MEDIUM_XML, TINY_XML};
 
     fn minidom_parse(path: &Path) {
@@ -20,8 +20,8 @@ mod minidom_bench {
 }
 
 mod edit_xml_bench {
-    use criterion::black_box;
     use edit_xml::*;
+    use std::hint::black_box;
     use std::path::Path;
     use xml_lib_perf_comparison::{bench, LARGE_XML, MEDIUM_UTF16, MEDIUM_XML, TINY_XML};
 
@@ -36,7 +36,7 @@ mod edit_xml_bench {
 }
 
 mod roxmltree_bench {
-    use criterion::black_box;
+    use std::hint::black_box;
     use std::path::Path;
     use xml_lib_perf_comparison::{bench, LARGE_XML, MEDIUM_XML, TINY_XML};
 
@@ -58,7 +58,7 @@ mod roxmltree_bench {
     bench!(LARGE_XML, large_roxmltree, roxmltree_parse);
 }
 mod xmltree_bench {
-    use criterion::black_box;
+    use std::hint::black_box;
     use std::{fs::File, path::Path};
     use xml_lib_perf_comparison::{bench, LARGE_XML, MEDIUM_XML, TINY_XML};
 

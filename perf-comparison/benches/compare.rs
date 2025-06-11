@@ -1,6 +1,7 @@
 #![allow(dead_code)]
+use std::hint::black_box;
 
-use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
+use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
 use edit_xml::ReadOptions;
 use xml_lib_perf_comparison::{get_bench_file_path, LARGE_XML, MEDIUM_XML, TINY_XML};
 
