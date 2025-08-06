@@ -70,7 +70,7 @@ pub mod utils;
 pub use crate::document::*;
 pub use crate::element::*;
 pub use crate::error::*;
-pub use crate::parser::{normalize_space, ReadOptions};
+pub use crate::parser::{ReadOptions, normalize_space};
 
 // Re-export quick-xml for convenience
 pub use quick_xml;

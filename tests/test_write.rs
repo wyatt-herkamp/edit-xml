@@ -28,7 +28,7 @@ fn test_escape() -> anyhow::Result<()> {
         .unwrap();
     doc.push_root_node(Node::PI("<&amp;".to_string())).unwrap();
     let xml = doc.write_str().unwrap();
-    println!("{}", xml);
+    println!("{xml}");
     assert_eq!(xml, expected);
     Ok(())
 }

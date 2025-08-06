@@ -172,7 +172,7 @@ pub mod document_validation {
     fn expected_breakdown_file(xml_file: &str, read_options: &ReadOptions) -> String {
         let results_folder = xml_file.trim_end_matches(".xml").to_owned();
         let read_options_file_name = super::create_read_options_file_name(read_options);
-        format!("{}/{}.json", results_folder, read_options_file_name)
+        format!("{results_folder}/{read_options_file_name}.json")
     }
     pub fn execute_test_with_all_options(xml_file: &'static str) -> anyhow::Result<()> {
         for read_options in super::iter_read_options() {
@@ -237,8 +237,7 @@ pub mod document_validation {
                     Ok(true)
                 } else {
                     panic!(
-                        "Breakdowns do not match\nExpected: {:#?}\nActual: {:#?}",
-                        expected, actual
+                        "Breakdowns do not match\nExpected: {expected:#?}\nActual: {actual:#?}"
                     );
                 }
             }
@@ -249,8 +248,7 @@ pub mod document_validation {
                     Ok(true)
                 } else {
                     panic!(
-                        "Breakdowns do not match\nExpected: {:#?}\nActual: {:#?}",
-                        expected, actual
+                        "Breakdowns do not match\nExpected: {expected:#?}\nActual: {actual:#?}"
                     );
                 }
             }
@@ -277,8 +275,7 @@ pub mod document_validation {
                 exit(1);
             } else {
                 panic!(
-                    "Breakdowns do not match\nExpected: {:#?}\nActual: {:#?}",
-                    expected, actual
+                    "Breakdowns do not match\nExpected: {expected:#?}\nActual: {actual:#?}"
                 );
             }
         }
@@ -301,14 +298,12 @@ pub mod document_validation {
         match comparison_result {
             BreakdownComparisonResult::MismatchedSize { expected, actual } => {
                 panic!(
-                    "Breakdowns do not match(Write Then Read)\nExpected: {:#?}\nActual: {:#?}",
-                    expected, actual
+                    "Breakdowns do not match(Write Then Read)\nExpected: {expected:#?}\nActual: {actual:#?}"
                 );
             }
             BreakdownComparisonResult::MismatchedBreakdown { expected, actual } => {
                 panic!(
-                    "Breakdowns do not match(Write Then Read)\nExpected: {:#?}\nActual: {:#?}",
-                    expected, actual
+                    "Breakdowns do not match(Write Then Read)\nExpected: {expected:#?}\nActual: {actual:#?}"
                 );
             }
             BreakdownComparisonResult::Match => {

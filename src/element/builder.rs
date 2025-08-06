@@ -1,4 +1,4 @@
-use crate::{utils::HashMap, Document, Node};
+use crate::{Document, Node, utils::HashMap};
 
 use super::Element;
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -27,7 +27,7 @@ impl NewNodes {
         };
 
         if let Err(e) = result {
-            panic!("Illegal Parameter put in ElementBuilder: {:?}", e);
+            panic!("Illegal Parameter put in ElementBuilder: {e:?}");
         }
     }
 }
@@ -109,7 +109,7 @@ impl ElementBuilder {
         if prefix.is_empty() {
             self.full_name = name.to_string();
         } else {
-            self.full_name = format!("{}{}", prefix, name);
+            self.full_name = format!("{prefix}{name}");
         }
         self
     }
@@ -302,7 +302,7 @@ mod tests {
         element.push_child(&mut doc, new_element)?;
         let to_string = doc.write_str()?;
 
-        println!("{}", to_string);
+        println!("{to_string}");
 
         Ok(())
     }

@@ -2,12 +2,12 @@ use crate::document::{Document, Node};
 use crate::element::Element;
 use crate::error::{DecodeError, EditXMLError, MalformedReason, Result};
 use crate::types::StandaloneValue;
-use crate::utils::{attributes, bytes_owned_to_unescaped_string, HashMap};
-use crate::utils::{bytes_to_unescaped_string, XMLStringUtils};
+use crate::utils::{HashMap, attributes, bytes_owned_to_unescaped_string};
+use crate::utils::{XMLStringUtils, bytes_to_unescaped_string};
 use encoding_rs::Decoder;
-use encoding_rs::{Encoding, UTF_16BE, UTF_16LE, UTF_8};
-use quick_xml::events::{BytesDecl, BytesStart, Event};
+use encoding_rs::{Encoding, UTF_8, UTF_16BE, UTF_16LE};
 use quick_xml::Reader;
+use quick_xml::events::{BytesDecl, BytesStart, Event};
 use std::io::{BufRead, Read};
 
 pub(crate) struct DecodeReader<R: Read> {
@@ -285,17 +285,17 @@ impl DocumentParser {
     fn handle_event(&mut self, event: Event) -> Result<bool> {
         match event {
             Event::Start(ref ev) => {
-                let parent = *self.element_stack.last().ok_or({
-                    EditXMLError::MalformedXML(MalformedReason::GenericMalformedTree)
-                })?;
+                let parent = *self.element_stack.last().ok_or(EditXMLError::MalformedXML(
+                    MalformedReason::GenericMalformedTree,
+                ))?;
                 let element = self.create_element(parent, ev)?;
                 self.element_stack.push(element);
                 Ok(false)
             }
             Event::End(_) => {
-                let elem = self.element_stack.pop().ok_or({
-                    EditXMLError::MalformedXML(MalformedReason::GenericMalformedTree)
-                })?;
+                let elem = self.element_stack.pop().ok_or(EditXMLError::MalformedXML(
+                    MalformedReason::GenericMalformedTree,
+                ))?;
                 // quick-xml checks if tag names match for us
                 if self.read_opts.empty_text_node {
                     // distinguish <tag></tag> and <tag />
@@ -307,9 +307,9 @@ impl DocumentParser {
                 Ok(false)
             }
             Event::Empty(ref ev) => {
-                let parent = *self.element_stack.last().ok_or({
-                    EditXMLError::MalformedXML(MalformedReason::GenericMalformedTree)
-                })?;
+                let parent = *self.element_stack.last().ok_or(EditXMLError::MalformedXML(
+                    MalformedReason::GenericMalformedTree,
+                ))?;
                 self.create_element(parent, ev)?;
                 Ok(false)
             }
@@ -326,9 +326,9 @@ impl DocumentParser {
                 // NOTE: Was Unescaped
                 let content = ev.unescape_to_string()?;
                 let node = Node::Text(content);
-                let parent = *self.element_stack.last().ok_or({
-                    EditXMLError::MalformedXML(MalformedReason::GenericMalformedTree)
-                })?;
+                let parent = *self.element_stack.last().ok_or(EditXMLError::MalformedXML(
+                    MalformedReason::GenericMalformedTree,
+                ))?;
                 parent.push_child(&mut self.doc, node).unwrap();
                 Ok(false)
             }
@@ -341,18 +341,18 @@ impl DocumentParser {
                     String::from_utf8(raw.to_vec())?
                 };
                 let node = Node::DocType(content);
-                let parent = *self.element_stack.last().ok_or({
-                    EditXMLError::MalformedXML(MalformedReason::GenericMalformedTree)
-                })?;
+                let parent = *self.element_stack.last().ok_or(EditXMLError::MalformedXML(
+                    MalformedReason::GenericMalformedTree,
+                ))?;
                 parent.push_child(&mut self.doc, node).unwrap();
                 Ok(false)
             }
             Event::Comment(ev) => {
                 let content = String::from_utf8(ev.escape_ascii().collect())?;
                 let node = Node::Comment(content);
-                let parent = *self.element_stack.last().ok_or({
-                    EditXMLError::MalformedXML(MalformedReason::GenericMalformedTree)
-                })?;
+                let parent = *self.element_stack.last().ok_or(EditXMLError::MalformedXML(
+                    MalformedReason::GenericMalformedTree,
+                ))?;
                 parent.push_child(&mut self.doc, node).unwrap();
                 Ok(false)
             }
@@ -432,7 +432,7 @@ impl DocumentParser {
         // Skip first event if it only has whitespace
         let event = match xmlreader.read_event_into(&mut buf)? {
             Event::Text(ev) => {
-                if ev.len() == 0 {
+                if ev.is_empty() {
                     #[cfg(feature = "tracing")]
                     tracing::trace!("Skipping empty text event");
                     xmlreader.read_event_into(&mut buf)?

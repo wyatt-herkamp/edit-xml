@@ -114,7 +114,7 @@ mod tests {
     fn oslash() -> anyhow::Result<()> {
         use anyhow::Context;
 
-        use crate::{utils::tests, Document, ReadOptions};
+        use crate::{Document, ReadOptions, utils::tests};
         use std::fs::read_to_string;
         tests::setup_logger();
         let file_path = tests::test_dir()

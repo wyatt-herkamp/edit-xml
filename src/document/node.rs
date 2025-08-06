@@ -4,7 +4,7 @@ mod breakdown;
 #[cfg(feature = "document-breakdown")]
 pub use breakdown::*;
 
-use crate::{element::ElementDebug, Document, Element};
+use crate::{Document, Element, element::ElementDebug};
 
 /// Represents an XML node.
 #[derive(Debug, Clone, PartialEq)]

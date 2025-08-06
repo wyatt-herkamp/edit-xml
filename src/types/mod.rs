@@ -1,4 +1,4 @@
-use crate::{error::MalformedReason, EditXMLError};
+use crate::{EditXMLError, error::MalformedReason};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
 pub enum StandaloneValue {
@@ -54,7 +54,7 @@ impl std::fmt::Display for StandaloneValue {
 }
 #[cfg(feature = "serde")]
 mod serde_impl {
-    use serde::{de::Visitor, Deserialize, Serialize};
+    use serde::{Deserialize, Serialize, de::Visitor};
 
     use super::StandaloneValue;
     impl Serialize for StandaloneValue {

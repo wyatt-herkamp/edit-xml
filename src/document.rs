@@ -1,10 +1,10 @@
+use crate::ElementBuilder;
 use crate::element::{Element, ElementData};
 use crate::error::{EditXMLError, Result};
 use crate::parser::{DocumentParser, ReadOptions};
 use crate::types::StandaloneValue;
-use crate::ElementBuilder;
-use quick_xml::events::{BytesCData, BytesDecl, BytesEnd, BytesPI, BytesStart, BytesText, Event};
 use quick_xml::Writer;
+use quick_xml::events::{BytesCData, BytesDecl, BytesEnd, BytesPI, BytesStart, BytesText, Event};
 use std::fs::File;
 use std::io::{Read, Write};
 use std::path::Path;
@@ -272,7 +272,7 @@ impl Document {
                 Node::Element(eid) => self.write_element(writer, *eid)?,
                 Node::Text(text) => writer.write_event(Event::Text(BytesText::new(text)))?,
                 Node::DocType(text) => writer.write_event(Event::DocType(
-                    BytesText::new(&format!(" {}", text)), // add a whitespace before text
+                    BytesText::new(&format!(" {text}")), // add a whitespace before text
                 ))?,
                 // Comment, CData, and PI content is not escaped.
                 Node::Comment(text) => {
@@ -300,7 +300,7 @@ impl Document {
             let attr_name = if prefix.is_empty() {
                 "xmlns".to_string()
             } else {
-                format!("xmlns:{}", prefix)
+                format!("xmlns:{prefix}")
             };
 
             let val = quick_xml::escape::escape(val.as_str());

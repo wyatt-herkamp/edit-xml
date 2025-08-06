@@ -221,7 +221,7 @@ impl Element {
         if prefix.is_empty() {
             data.full_name = name.to_string();
         } else {
-            data.full_name = format!("{}:{}", prefix, name);
+            data.full_name = format!("{prefix}:{name}");
         }
     }
 
@@ -526,8 +526,8 @@ impl Element {
     ///
     /// # Errors
     ///    - [EditXMLError::HasAParent]: When you want to replace an element's parent with another,
-    ///         call `element.detach()` to make it parentless first.
-    ///         This is to make it explicit that you are changing an element's parent, not adding another.
+    ///      call `element.detach()` to make it parentless first.
+    ///      This is to make it explicit that you are changing an element's parent, not adding another.
     ///    - [EditXMLError::ContainerCannotMove]: The container element's parent must always be None.
     pub fn push_child(&self, doc: &mut Document, node: impl Into<Node>) -> Result<()> {
         let node = node.into();

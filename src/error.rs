@@ -1,4 +1,4 @@
-use quick_xml::{escape::EscapeError, events::attributes::AttrError, Error as XMLError};
+use quick_xml::{Error as XMLError, escape::EscapeError, events::attributes::AttrError};
 use std::{str::Utf8Error, string::FromUtf8Error, sync::Arc};
 use thiserror::Error;
 

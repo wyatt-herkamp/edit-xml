@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{types::StandaloneValue, Document};
+use crate::{Document, types::StandaloneValue};
 
 use super::NodeBreakdown;
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -32,8 +32,8 @@ impl Document {
 mod tests {
 
     use super::*;
-    use crate::utils::tests::setup_logger;
     use crate::Document;
+    use crate::utils::tests::setup_logger;
 
     #[test]
     fn breakdown() {
@@ -51,7 +51,7 @@ mod tests {
         let mut breakdown: Vec<NodeBreakdown> = doc.breakdown().root_elements;
         assert_eq!(breakdown.len(), 1, "Expected 1 root element");
         let project = breakdown.pop().unwrap();
-        println!("{:#?}", project);
+        println!("{project:#?}");
         let NodeBreakdown::Element(project) = project else {
             panic!("Expected root element to be an Element");
         };
@@ -61,6 +61,6 @@ mod tests {
         let NodeBreakdown::Element(name) = name else {
             panic!("Expected child to be an Element");
         };
-        println!("{:?}", name);
+        println!("{name:?}");
     }
 }
