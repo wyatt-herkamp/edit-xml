@@ -521,6 +521,13 @@ impl Element {
 /// But in return, it is not possible for a document to be in an inconsistent state,
 /// where an element's parent doesn't have the element as its children.
 impl Element {
+    pub(crate) fn last_child(&self, doc: &Document) -> Option<Element> {
+        self.children(doc)
+            .iter()
+            .filter_map(|n| n.as_element())
+            .last()
+    }
+
     /// Equivalent to `vec.push()`.
     ///
     ///

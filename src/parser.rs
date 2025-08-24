@@ -332,6 +332,27 @@ impl DocumentParser {
                 parent.push_child(&mut self.doc, node).unwrap();
                 Ok(false)
             }
+            Event::GeneralRef(ev) =>{
+                if self.read_opts.ignore_whitespace_only && only_has_whitespace(&ev) {
+                    return Ok(false);
+                }
+                // when trim_text, ignore_whitespace_only, empty_text_node are all false
+                if ev.is_empty() {
+                    return Ok(false);
+                }
+                println!("GeneralRef: {:?}", ev);
+                // NOTE: Was Unescaped
+                let content = ev.unescape_to_string()?;
+                // Append this to the last text node
+                let node = Node::Text(content);
+
+                let parent = *self.element_stack.last().ok_or(EditXMLError::MalformedXML(
+                    MalformedReason::GenericMalformedTree,
+                ))?;                parent.push_child(&mut self.doc, node).unwrap();
+
+
+                Ok(false)
+            }
             Event::DocType(ev) => {
                 // Event::DocType comes with one leading whitespace. Strip the whitespace.
                 let raw = ev.unescape_to_string()?.into_bytes();

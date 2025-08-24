@@ -1,4 +1,4 @@
-use quick_xml::{Error as XMLError, escape::EscapeError, events::attributes::AttrError};
+use quick_xml::{encoding::EncodingError, escape::EscapeError, events::attributes::AttrError, Error as XMLError};
 use std::{str::Utf8Error, string::FromUtf8Error, sync::Arc};
 use thiserror::Error;
 
@@ -28,6 +28,8 @@ pub enum EditXMLError {
     /// or it doesn't match its actual encoding,
     #[error(transparent)]
     CannotDecode(#[from] DecodeError),
+    #[error("Cannot find entity for {0}")]
+    EncodingError(#[from] EncodingError),
     /// Assorted errors while parsing XML.
     #[error("Malformed XML: {0}")]
     MalformedXML(#[from] MalformedReason),

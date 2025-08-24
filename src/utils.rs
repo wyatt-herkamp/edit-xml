@@ -4,8 +4,8 @@ use core::str;
 use std::{borrow::Cow, ops::Deref};
 
 use quick_xml::{
-    escape::resolve_predefined_entity,
-    events::{BytesPI, BytesText},
+    escape::{resolve_predefined_entity, resolve_xml_entity},
+    events::{BytesPI, BytesRef, BytesText},
     name::{LocalName, QName},
 };
 
@@ -44,6 +44,19 @@ impl XMLStringUtils for BytesText<'_> {
     }
     fn unescape_to_string(&self) -> Result<String, EditXMLError> {
         bytes_to_unescaped_string(self.deref())
+    }
+}
+impl XMLStringUtils for BytesRef<'_>{
+    fn escape_ascii_into_string(&self) -> Result<String, EditXMLError> {
+        Ok(self.escape_ascii().to_string())
+    }
+
+    fn into_string(&self) -> Result<String, EditXMLError> {
+        String::from_utf8(self.to_vec()).map_err(EditXMLError::from)
+    }
+    fn unescape_to_string(&self) -> Result<String, EditXMLError> {
+        let decoded =self.decode()?;
+     Ok(resolve_xml_entity(decoded.as_ref()).unwrap().to_owned())
     }
 }
 impl XMLStringUtils for QName<'_> {
@@ -85,6 +98,12 @@ impl XMLStringUtils for BytesPI<'_> {
     fn unescape_to_string(&self) -> Result<String, EditXMLError> {
         bytes_to_unescaped_string(self.content())
     }
+}
+pub(crate) fn resolve_ref(cow: &[u8]) -> Result<Cow<str>, EditXMLError> {
+    let value = str::from_utf8(cow).map_err(EditXMLError::from)?;
+
+    let unescape = crate::utils::encoding::unescape_with(value, resolve_predefined_entity)?;
+    Ok(unescape)
 }
 
 pub(crate) fn bytes_to_unescaped_string(cow: &[u8]) -> Result<String, EditXMLError> {

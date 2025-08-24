@@ -1,4 +1,4 @@
-use edit_xml::{Document, Node, ReadOptions};
+use edit_xml::{Document, DocumentBreakdown, Node, NodeDebug, ReadOptions};
 mod test_utils;
 
 #[test]
@@ -63,12 +63,24 @@ fn test_unescape() {
         ..Default::default()
     };
     let doc = Document::parse_str_with_opts(xml, opts).unwrap();
-
     let abc = doc.root_element().unwrap();
     assert_eq!(abc.attribute(&doc, "attr"), Some("\"val\""));
-    let text = &abc.children(&doc)[0];
-    assert!(matches!(text, Node::Text(_)));
-    assert_eq!(text.text_content(&doc), "<Text&'>");
+    let text_left_arrow = &abc.children(&doc)[0];
+    let text_text = &abc.children(&doc)[1];
+    let text_amp = &abc.children(&doc)[2];
+    let text_apost = &abc.children(&doc)[3];
+    let text_right_arrow = &abc.children(&doc)[4];
+
+    assert!(matches!(text_left_arrow, Node::Text(_)));
+    assert_eq!(text_left_arrow.text_content(&doc), "<");
+    assert!(matches!(text_text, Node::Text(_)));
+    assert_eq!(text_text.text_content(&doc), "Text");
+    assert!(matches!(text_amp, Node::Text(_)));
+    assert_eq!(text_amp.text_content(&doc), "&");
+    assert!(matches!(text_apost, Node::Text(_)));
+    assert_eq!(text_apost.text_content(&doc), "'");
+    assert!(matches!(text_right_arrow, Node::Text(_)));
+    assert_eq!(text_right_arrow.text_content(&doc), ">");
 
     let cdata = &doc.root_nodes()[1];
     assert!(matches!(cdata, Node::CData(_)));
