@@ -4,7 +4,7 @@ use core::str;
 use std::{borrow::Cow, ops::Deref};
 
 use quick_xml::{
-    escape::{resolve_predefined_entity, resolve_xml_entity},
+    escape::resolve_predefined_entity,
     events::{BytesPI, BytesRef, BytesText},
     name::{LocalName, QName},
 };
@@ -56,7 +56,9 @@ impl XMLStringUtils for BytesRef<'_> {
     }
     fn unescape_to_string(&self) -> Result<String, EditXMLError> {
         let decoded = self.decode()?;
-        Ok(resolve_xml_entity(decoded.as_ref()).unwrap().to_owned())
+        resolve_entity(decoded.as_ref())
+            .map(|s| s.to_owned())
+            .ok_or(EditXMLError::CannotDecode(crate::DecodeError::Other))
     }
 }
 impl XMLStringUtils for QName<'_> {
@@ -98,6 +100,20 @@ impl XMLStringUtils for BytesPI<'_> {
     fn unescape_to_string(&self) -> Result<String, EditXMLError> {
         bytes_to_unescaped_string(self.content())
     }
+}
+pub(crate) fn resolve_entity(entity: &str) -> Option<&str> {
+    #[cfg(not(feature = "escape-html"))]
+    let result = quick_xml::escape::resolve_xml_entity(entity);
+    #[cfg(feature = "escape-html")]
+    let result = quick_xml::escape::resolve_html5_entity(entity);
+
+    #[cfg(feature = "soft-fail-unescape")]
+    match result {
+        Some(v) => Some(v),
+        None => Some(entity),
+    }
+    #[cfg(not(feature = "soft-fail-unescape"))]
+    result
 }
 
 pub(crate) fn bytes_to_unescaped_string(cow: &[u8]) -> Result<String, EditXMLError> {
