@@ -325,11 +325,17 @@ impl DocumentParser {
                 }
                 // NOTE: Was Unescaped
                 let content = ev.unescape_to_string()?;
-                let node = Node::Text(content);
                 let parent = *self.element_stack.last().ok_or(EditXMLError::MalformedXML(
                     MalformedReason::GenericMalformedTree,
                 ))?;
-                parent.push_child(&mut self.doc, node).unwrap();
+                let children = parent.children_mut(&mut self.doc);
+
+                let Some(Node::Text(last_text)) = children.last_mut() else {
+                    let node = Node::Text(content);
+                    parent.push_child(&mut self.doc, node).unwrap();
+                    return Ok(false);
+                };
+                last_text.push_str(&content);
                 Ok(false)
             }
             Event::GeneralRef(ev) => {
@@ -340,17 +346,20 @@ impl DocumentParser {
                 if ev.is_empty() {
                     return Ok(false);
                 }
-                println!("GeneralRef: {:?}", ev);
                 // NOTE: Was Unescaped
                 let content = ev.unescape_to_string()?;
                 // Append this to the last text node
-                let node = Node::Text(content);
 
                 let parent = *self.element_stack.last().ok_or(EditXMLError::MalformedXML(
                     MalformedReason::GenericMalformedTree,
                 ))?;
-                parent.push_child(&mut self.doc, node).unwrap();
-
+                let children = parent.children_mut(&mut self.doc);
+                let Some(Node::Text(last_text)) = children.last_mut() else {
+                    let node = Node::Text(content);
+                    parent.push_child(&mut self.doc, node).unwrap();
+                    return Ok(false);
+                };
+                last_text.push_str(&content);
                 Ok(false)
             }
             Event::DocType(ev) => {
