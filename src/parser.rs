@@ -332,7 +332,7 @@ impl DocumentParser {
                 parent.push_child(&mut self.doc, node).unwrap();
                 Ok(false)
             }
-            Event::GeneralRef(ev) =>{
+            Event::GeneralRef(ev) => {
                 if self.read_opts.ignore_whitespace_only && only_has_whitespace(&ev) {
                     return Ok(false);
                 }
@@ -348,8 +348,8 @@ impl DocumentParser {
 
                 let parent = *self.element_stack.last().ok_or(EditXMLError::MalformedXML(
                     MalformedReason::GenericMalformedTree,
-                ))?;                parent.push_child(&mut self.doc, node).unwrap();
-
+                ))?;
+                parent.push_child(&mut self.doc, node).unwrap();
 
                 Ok(false)
             }

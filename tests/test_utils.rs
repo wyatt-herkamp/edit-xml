@@ -236,9 +236,7 @@ pub mod document_validation {
                     info!("Breakdowns updated. ");
                     Ok(true)
                 } else {
-                    panic!(
-                        "Breakdowns do not match\nExpected: {expected:#?}\nActual: {actual:#?}"
-                    );
+                    panic!("Breakdowns do not match\nExpected: {expected:#?}\nActual: {actual:#?}");
                 }
             }
             BreakdownComparisonResult::MismatchedBreakdown { expected, actual } => {
@@ -247,9 +245,7 @@ pub mod document_validation {
                     info!("Breakdowns updated. ");
                     Ok(true)
                 } else {
-                    panic!(
-                        "Breakdowns do not match\nExpected: {expected:#?}\nActual: {actual:#?}"
-                    );
+                    panic!("Breakdowns do not match\nExpected: {expected:#?}\nActual: {actual:#?}");
                 }
             }
             BreakdownComparisonResult::Match => {
@@ -274,9 +270,7 @@ pub mod document_validation {
                 eprintln!("Breakdowns updated. Exiting...");
                 exit(1);
             } else {
-                panic!(
-                    "Breakdowns do not match\nExpected: {expected:#?}\nActual: {actual:#?}"
-                );
+                panic!("Breakdowns do not match\nExpected: {expected:#?}\nActual: {actual:#?}");
             }
         }
         Ok(())
