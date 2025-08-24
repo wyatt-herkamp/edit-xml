@@ -63,13 +63,12 @@ fn test_unescape() {
         ..Default::default()
     };
     let doc = Document::parse_str_with_opts(xml, opts).unwrap();
-
     let abc = doc.root_element().unwrap();
     assert_eq!(abc.attribute(&doc, "attr"), Some("\"val\""));
     let text = &abc.children(&doc)[0];
+
     assert!(matches!(text, Node::Text(_)));
     assert_eq!(text.text_content(&doc), "<Text&'>");
-
     let cdata = &doc.root_nodes()[1];
     assert!(matches!(cdata, Node::CData(_)));
     assert_eq!(cdata.text_content(&doc), "<&amp;>");

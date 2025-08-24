@@ -377,6 +377,10 @@ impl Element {
     pub fn children<'a>(&self, doc: &'a Document) -> &'a Vec<Node> {
         &self.data(doc).children
     }
+
+    pub(crate) fn children_mut<'a>(&self, doc: &'a mut Document) -> &'a mut Vec<Node> {
+        &mut self.mut_data(doc).children
+    }
     /// Pushes all child nodes to `nodes`.
     ///
     /// This is used to recursively get all children of an element.
